@@ -1,0 +1,19 @@
+Task A
+1. We need a template for storing "TestResult" (3)
+2. Description (4)
+3. Temperature (4)
+4. Unit - Ensure the user can only pick "C", "K" or "F". (4)
+5. Reference to a Part (4)
+6. Reference to a number of documents (8)
+7. Add any number of comments (8)
+8. How do we allow everyone to see the data but only allow "Engineering" to add new (3, 7)
+
+Task B
+1. Create a user - login as that user
+
+2. Search for all parts that start with "a"
+3. Search for all parts that start with "a" OR "b"
+4. Search for all parts that are NOT a "Component"
+
+5. Implement the above mentioned specification
+6. Create a simple form to view the data

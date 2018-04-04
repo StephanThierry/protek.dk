@@ -1,0 +1,59 @@
+Server:
+     <% foreach (ConfigElement element in Model)
+            {
+            %>
+            <div class='group'>
+                <h3>
+                    <a href='#'><span id="accordionheaderTitle">Konfig #<% = entryIndex + 1 %></span></a>
+                </h3>
+                <div>
+                    <button type="button" id='removeButton<% = entryIndex %>' class="removeButton">Fjern konfig</button>
+                    <table>
+                        <tr>
+                            <td>
+                                <% =Html.Hidden("KonfigModel.Entry["+entryIndex+"].IsHidden", element.IsHidden.ToString())%>
+                                <% =Html.TextBoxField("Name", "Name of konfig", "KonfigModel.Entry["+entryIndex+"].name", element.name, "textBoxName")%>
+                                <% =Html.TextBoxField("Value", "Value of konfig", "KonfigModel.Entry["+entryIndex+"].value", element.name, "textBoxValue")%>
+								[BLA BLA BLA]
+							</td>
+                        </tr>
+                    </table>
+
+                </div>
+            </div>
+
+            <% entryIndex++;
+               } %>
+        </div>
+
+Client:
+
+function AddTabClicked(thisID)
+{
+    $("#"+thisID).click(function (e)  
+    {
+		[BLA BLA]
+		AddTabHandler(index, index +1)
+	}
+	[bla bla]
+}
+function AddTabHandler(index, sortIndex) {
+    var gDiv = "div[class=group]:last";
+    $(gDiv).find('div').first().html(addTab(index, sortIndex));
+}
+
+function addTab(index, sortIndex) {
+    return '<button type="button" id=\"removeGroupButton' + index + '\" class="removeGroupButton">Fjern konfig</button>' +
+        '<table>' +
+        '<tbody>' +
+        '<tr><td></td></tr>' +
+        '<tr>' +
+        '<td><label>Name<span class=\"small\">Name of konfig</span></label></td>' +
+        '<td><input class=\"textBoxName\" name=\"KonfigModel.Entry[' + index + '].name\" id=\"KonfigModel.Entry_' + index + '__Name\" type=\"text\" value=\"\"></td>' +
+		[BLA BLA BLA]
+		'</td>' +
+        '</tr>' +
+        '<tr><td></td></tr>' +
+        '</tbody>' +
+        '</table>';
+}

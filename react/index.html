@@ -1,0 +1,611 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <title>React</title>
+    <link href="assets/css/ionic.css" rel="stylesheet" type="text/css">
+    <link href="assets/css/keypoint.css" rel="stylesheet" type="text/css">
+    <link href="assets/css/prettify.css" rel="stylesheet" type="text/css">
+    <link href="assets/css/slides.css" rel="stylesheet" type="text/css">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css">
+
+	<style>
+	@media (min-width: 800px) {
+		section li {
+		padding: 0px 0px 0px 0px   !important;
+		font-size: 2.2rem;
+		}
+	}
+	</style>
+	</head>
+
+<body>
+
+<div id="menu-btn" class="logo"></div>
+
+<div id="wrapper"></div>
+
+<div id="slides">
+
+<section>
+    <img src="img/react.png" style="max-height: 30%"/>
+    <h1>Intro til ReactJS</h1>
+	<small>for C# udviklere</small>
+    <p>Ditmer Academy 2016</p>
+	<small>(Use touchdevice or arrowkeys to navigate)</small>
+</section>
+
+<section class="bg">
+    <img src="img/react.png" style="width:150px;height:150px;border-radius:50%"/>
+    <div class="speaker-info">
+        <ol>
+		<p><li>Hvad? (Hvad er ReactJS?)</li></p>
+		<p><li>Hvorfor? (Hvorfor bruge ReactJS?)</li></p>
+        <p><li>Hvordan? (Hvordan kommer man igang?)
+			<ul>
+				<li style="text-indent: 2em;">Shaving the Yak</li>
+				<li style="text-indent: 2em;">Avoid shaving the Yak</li>
+				<li style="text-indent: 2em;">Vis mig nu bare koden!</li>
+			</ul>
+		</li></p>
+        <p><li>Licens - issue?</li></p>
+        <p><li>What's next?
+		<ul>
+				<li style="text-indent: 2em;">ReactFiber, ReactNative</li>
+			</ul>
+		</li></p>
+		</ol></p>
+    </div>
+</section>
+
+<section>
+    <img src="img/react.png" style="max-height: 30%"/>
+    <h1>Hvad?</h1>
+	<br>
+	<h2>Et JavaScript bibliotek til at skabe UI</h2>
+	<br>
+	Det beskrives ofte som V'et i MVC
+</section>
+
+
+<section>
+    <img src="img/react.png" style="max-height: 30%"/>
+    <h1>Data-first paradigm</h1>
+	<br>
+	<h3>(That's not a thing!?)</h3>
+	<br>
+	<p class="build">Data er state er data er state</p>
+	<p class="build">DOM first &gt; Data-first</p>
+	<p class="build">Vi modificerer ikke DOM'en, vi modificerer data og DOM'en følger (magisk) med.</p>
+	<p></p>
+</section>
+
+<section>
+    <h1>Data-first paradigm</h1>
+    <p>JQuery: <xmp class="prettyprint" style="margin-top:2rem;">var configDiv = "div[class=group]:last";
+$(configDiv).find('div').first().html(addTab(index, sortIndex));</xmp></p>
+	<p>ReactJS: <xmp class="prettyprint" style="margin-top:2rem;">configurations.push(defaultConfig());
+this.setState({model : configurations });
+</xmp></p>
+</section>
+
+<section>
+    <h1>Hvorfor bruge ReactJS. Top 3 grunde.</h1>
+    <p>1. Fast</p>
+    <p class="build">2. Fast</p>
+    <p class="build">3. FAST</p>
+</section>
+
+<section>
+    <h1>Andre grunde til at bruge ReactJS</h1>
+    <p>Benyt den CPU power/RAM der er i klienten </p>
+    <p class="build">Det er let at gemme vores frontend state og genskabe den.</p>
+    <p class="build">New and exciting</p>
+</section>
+
+<section>
+    <h1>Fordele / ulemper</h1>
+	<p class="build">FOR:</i></p>
+	<p class="build">JavaScript / JSX / ReactJS er kun et viewlag</p>
+	<p class="build">IMOD:</p>
+	<p class="build">JavaScript / JSX / ReactJS er kun et viewlag</p>
+</section>
+
+<section>
+	<h1>JavaScript development explained:</h1>
+	<p class="build"><img src="img/JavaScript.gif"></p>
+</section>
+
+<section>
+    <img src="img/atom.png" style="max-height: 30%"/>
+	 <h1>Editor: Atom</h1>
+	 <p class="build">Udviklet af GitHub</p>
+	 <p class="build">Bygget helt i JavaScript (Electron http://electron.atom.io/)</p>
+	 <p class="build">Forstår ReactJS JSX syntax, inkl. code completion</p>
+
+</section>
+
+<section>
+     <img src="img/vscode.png" style="max-height: 30%"/>
+     <h1>Editor: Visual Studio Code</h1>
+	 <p class="build">Udviklet af Microsoft</i></p>
+	 <p class="build">Free. Open source. Runs everywhere.</i></p>
+	 <p class="build">Forstår ReactJS JSX syntax, inkl. code completion</i></p>
+</section>
+
+<section>
+     <div><img src="img/atom.png" width="150px"/><img src="img/vscode.png"  width="150px"/></div>
+     <h1>Hvorfor overhovedet bruge Atom eller Code?</h1>
+	 <p class="build">Hvorfor have en ekstra editor ved siden af VS</i></p>
+	 <p class="build">Hvorfor sætte sig ind i en ny IDE</i></p>
+	 <br>
+</section>
+
+
+<section>
+	 <img src="img/GOR_DET.png" style="max-height: 50%"/>
+</section>
+
+
+<!--
+<section>
+    <h1>Traditional MV* Frameworks</h1>
+    <h2>Separation of Concerns</h2>
+    <div class="horizontal padding-top" style="width: 100%">
+        <div>
+            <div class="box">
+                Model
+            </div>
+            <div class="medium-text" style="text-align: center;width: 100%;color:#62DEFB">Data</div>
+        </div>
+        <div>
+            <div class="box">
+                Controller
+            </div>
+            <div class="medium-text" style="text-align: center;width: 100%;color:#62DEFB">
+                Display logic (JavaScript)
+            </div>
+        </div>
+        <div>
+            <div class="box">
+                ModelView
+            </div>
+            <div class="medium-text" style="text-align: center;width: 100%;color:#62DEFB">
+                Tailored Data
+            </div>
+        </div>
+        <div>
+            <div class="box">
+                View
+            </div>
+            <div class="medium-text" style="text-align: center;width: 100%;color:#62DEFB">
+                Templates (HTML + custom extensions)
+            </div>
+        </div>
+    </div>
+    <p class="build">Controller, ModelView, and View <strong>are</strong> coupled:<br/>when you change one, you often have to change the others</p>
+</section>
+
+-->
+
+
+<section>
+    <h1>Traditionel webapp (f.eks. MVC + JQuery) </h1>
+    <ul class="padding-top">
+        <li>CLASS og ID bruges i HTML for at kunne fanges med en JQuery selector</li>
+        <li>HIDDEN fields bruges til lagre en initiel værdi og/eller sikre POST resultat</li>
+        <li>Imperative beskrivelse af flow</li>
+        <xmp class="prettyprint" style="margin-top:2rem;">$( document.body ).click(function() {
+  $( ".myClass" ).each(function( i ) {
+    if ( this.style.color !== "blue" ) {
+      this.style.color = "blue";
+    } else {
+      this.style.color = "";
+    }
+  });
+});</xmp></li>
+		<li>State er udtrykt i de individuelle DOM effekter (eller i HIDDEN fields)</li>
+    </ul>
+</section>
+
+<section>
+	<img src="img/react.png" style="max-height: 30%"/>
+    <h1>ReactJS - Virtual DOM</h1>
+    <p>Re-render alt (in-memory) hver gang data ændre sig:</p>
+    <ol>
+        <li class="build">"Data-first" tankegang</li>
+        <li class="build">Declarative beskrivelse af UI flow</li>
+        <li class="build">En helt ny app renderes i memory</li>
+        <li class="build">Det mindste sæt af ændringer beregnes og pushes til DOM'en</li>
+    </ol>
+</section>
+
+<section>
+    <h1>Virtual DOM fordele</h1>
+    <ol class="padding-top">
+        <li><strong>Mere læsbar kode</strong><br/>Det er tydeligt hvad hver komponent gør</li>
+        <li><strong>Hurtigt</strong><br/>Skrivning til DOM'en håndteres af ReactJS</li>
+    </ol>
+</section>
+
+<section>
+    <img src="img/react.png" style="max-height: 30%"/>
+    <h2>Hvordan?</h2>
+</section>
+
+<section>
+<h1>Thinking in React</h1>
+    <img src="img/Box1.png"/>
+    <p>https://facebook.github.io/react/docs/thinking-in-react.html</p>
+</section>
+
+<section>
+<h1>Thinking in React</h1>
+    <img src="img/Box2.png"/>
+</section>
+
+<section>
+<h1>Thinking in React</h1>
+<p>Data / State</p>
+    <xmp style="color: black; font-size: 22px !important; line-height : 120% !important;">var model = {
+  masterdata: {
+    "weeks": [{ "description": "Uge 7 (ons-lør)", "key": 925 },
+              { "description": "Uge 8 (ons-lør)", "key": 926 }],
+    "countries": [{ "name": "Denmark", "key": 1, "currency": "DKK", "rate": 7.4356 },
+                  { "name": "Sweden", "key": 2, "currency": "SEK", "rate": 9.5849 },
+                  { "name": "Norway", "key": 3, "currency": "NOK", "rate": 9.2609 }],
+    "selectedCountry": 1
+  },
+  "route": {
+    "description": "CPH-SZG (SK7881) - SZG-CPH (SK7882)",
+    "key": 314,
+    "destinations": [{ "name": "Bad Gastein", "key": 423,
+      "hotels": [{ "name": "Hotel Elisabethpark", "key": 962, "open": true,
+        "roomTypes": [{ "description": "Dobbeltværelse u. dusch/wc m. opredning", "key": 443,
+          "discounts": [{ "week": 925, "key": 2342, "units": 2, "price": 1000, "discount": 0 },
+                        { "week": 926, "key": 2343, "units": 1, "price": 1100, "discount": 0 }]
+                      }, { "description": "Dobbeltværelse m. dusch/wc", "key": 343,
+          "discounts": [{ "week": 925, "key": 2344, "units": 0, "price": 1300, "discount": 0 },
+                        { "week": 926, "key": 2345, "units": 1, "price": 1300, "discount": 0 }]
+        }]
+      }......</xmp>
+</section>
+
+<section>
+<h1>JSX</h1>
+<ul class="padding-top">
+    <li>HTML lignende markup</li>
+    <li>UI beskrives deklarativt inline i JS kode</li>
+    <li>Relativt simpelt at forstå</li>
+    <li>Oversættes til Vanilla-JavaScript for at det kan kører i alle browsere</li>
+</ul>
+</section>
+
+<section>
+    <h1>JSX</h1>
+    <xmp class="prettyprint" style="margin-top:2rem;"><div onClick={this.handleClick}>
+   Hello {user.name}, welcome to the system. Click here.
+</div>
+	</xmp>
+</section>
+
+<section>
+    <h1>JSX</h1>
+    <br/>
+    HelloWorld.jsx:
+    <xmp class="prettyprint" style="margin-top:2rem;"><div onClick={this.handleClick}>
+   <Greeting name={user.name}/> Click here.
+</div>
+</xmp>
+<br/>
+Greeting.jsx:
+<xmp class="prettyprint" style="margin-top:2rem;"><span>
+ Hello {this.props.name}, welcome to the system.
+</span>
+</xmp>
+</section>
+
+<section>
+<h1>JSX</h1>
+<p>Actions</p>
+  <xmp class="prettyprint" style="margin-top:2rem;">var actions = {
+    update_country: function update_country(countryKey) {
+      self.state.model.masterdata.selectedCountry = countryKey;
+      self.setState({ model: self.state.model });
+}</xmp>
+<p>Passing actions to your components</p>
+  <xmp class="prettyprint" style="margin-top:2rem;"><MyComponent mydataset={someobj.dataset} myactions={actions}/></xmp>
+  <xmp class="prettyprint" style="margin-top:2rem;">this.props.myactions.update_country(event.target.value);</xmp>
+</section>
+
+
+<!--
+<section>
+    <iframe src="http://coenraets.org/apps/trader" width="600" height="620" scrolling="no"></iframe>
+</section>
+
+<section>
+    <iframe src="http://belgianbeerexplorer.com" style="position:absolute;top:0;bottom:0;left:0;right:0;width:100%;height:100%;" scrolling="no"></iframe>
+</section>
+-->
+
+
+<section>
+	<h1>Shaving the Yak</h1>
+	<br/>
+	<img src="img/yak-shaving.jpg" style="max-height: 30%"/>
+	<p>
+	"Any apparently useless activity which, by allowing you to overcome intermediate difficulties, allows you to solve a larger problem."<br/>
+	</p>
+</section>
+
+ <section>
+	<h1>Shaving the Yak</h1>
+	 <ul>
+		 <li class="build">npm (NodeJS Package Manager)</li>
+		 <li class="build">Babel (The compiler for writing next generation JavaScript)</li>
+		 <li class="build">Grunt (The JavaScript Task Runner)</li>
+		 <li class="build">GulpJS (the streaming build system)</li>
+		 <li class="build">+ "Linting" (analyse code for potential errors)</li>
+		 <li class="build">+ "Autoprefixer" (apply CSS prefixes)</li>
+		 <li class="build">Webpack - loaders/tasks (Module Bundler)</li>
+		 <li class="build">Browserify (Bundling of your dependencies)</li>
+		 <li class="build">package.json "scripts": {"webpack": "webpack"} - npm run webpack</li>
+		 <li class="build">TeamCity: install npm, NodeJS plugin, Build step</li>
+	 </ul>
+ </section>
+
+
+ <section>
+	<h1>Shaving the Yak</h1>
+	<br>
+	 <ul>
+		 <li>Start med at installere NodeJS fra https://nodejs.org/en/</li>
+		 <li class="build">"npm init" for at skabe "package.json"</li>
+		 <li class="build">"npm install --save-dev babel-loader"</li>
+		 <p class="build"><img src="img/headexplode.gif"></p>
+	 </ul>
+ </section>
+
+
+  <section>
+	<h1>Avoid shaving the Yak</h1>
+	 <ul>
+		 <li class="build">Start et .NET MVC project</li>
+		 <li class="build">NuGet: React.Web.Mvc4 (Transpiler/Taskrunner)<br></li>
+		 <li class="build">(Optional) NuGet: System.Web.Optimization.React (Bundler)<br></li>
+
+		 <p class="build"><img width="400px" src="img\whatsall.gif"> <br/>https://reactjs.net/</p>
+	 </ul>
+ </section>
+
+  <section>
+	<h1>React.Web.Mvc4</h1>
+	<xmp class="prettyprint" style="margin-top:2rem;"><script src="https://fb.me/react-15.0.1.js"></script>
+<script src="https://fb.me/react-dom-15.0.1.js"></script>
+
+<div id="helloApp"></div>
+
+<script src="./scripts/HelloWorld.jsx"></script></xmp>
+	<p>"The files will automatically be compiled to JavaScript and cached server-side. No precompilation required. Perfect for development."</p>
+  </section>
+
+  <section>
+	<h1>HelloWorld.jsx</h1>
+	<xmp class="prettyprint" style="margin-top:2rem;">var HelloWorld = React.createClass({
+  render: function() {
+    return <div>Hello world!</div>;
+  }
+})
+
+ReactDOM.render(
+  <HelloWorld />,
+  document.getElementById('helloApp')
+);
+</xmp><br>
+https://reactjs.net/getting-started/tutorial_aspnet4.html<br>
+  </section>
+
+  <section>
+  <h1>Hvordan kan man kalde .jsx scripts direkte?</h1>
+  <br>
+  Web.config:
+  <xmp class="prettyprint" style="margin-top:2rem;"><httpHandlers>
+  <add verb="GET" path="*.jsx" type="React.Web.BabelHandlerFactory, React.Web" />
+</httpHandlers></xmp>
+  </section>
+
+ <section>
+  <h1>Mindre tweak...</h1>
+  <br>
+  .\App_Start\ReactConfig.cs:
+<xmp class="prettyprint" style="margin-top:2rem;">public static class ReactConfig
+{
+  public static void Configure()
+  {
+    ReactSiteConfiguration.Configuration.SetReuseJavaScriptEngines(false);
+  }
+};</xmp>
+ </section>
+
+  <section>
+	<h1>System.Web.Optimization.React</h1>
+	<xmp class="prettyprint" style="margin-top:2rem;">// In BundleConfig.cs
+bundles.Add(new JsxBundle("~/bundles/main").Include(
+    // Add your JSX files here
+    "~/Scripts/HelloWorld.jsx",
+    "~/Scripts/AnythingElse.jsx",
+    // You can include regular JavaScript files in the bundle too
+    "~/Scripts/ajax.js",
+));</xmp>
+
+<br>
+
+<xmp class="prettyprint" style="margin-top:2rem;"><!-- In your view -->
+@Scripts.Render("~/bundles/main")</xmp>
+<br>
+<p>Bundle - for production</p>
+
+ </section>
+
+<section>
+	<h1>Ulemper ved at bruge React.NET</h1>
+	<br/>
+	Ingen support for JavaScript Modules<br>
+	<xmp class="prettyprint">import { Provider } from 'react-redux';</xmp>
+  Ingen compile/transpile fejlbeskeder<br>
+  <xmp class="prettyprint">SyntaxError: ./ReactYak/source/hello.jsx: Unexpected token, expected } (6:63)
+  4 | class Hello extends React.Component {
+  5 |   render() {
+> 6 |     return  <h1 style={{color:'grey'}}>Hello {this.props.name();}</h1>
+    |                                                                ^
+  7 |
+  8 |   }
+  9 | }</xmp>
+	<br>
+	:-(
+</section>
+
+
+
+
+<section>
+<h1>Licens. Do you agree....</h1>
+<br>
+<h2>Yes yes yes - next next next </h2>
+<br>
+
+<font size="3" style="line-height: 150%;">Additional Grant of Patent Rights Version 2<br>
+
+"Software" means the React software distributed by Facebook, Inc.<br>
+<br>
+Facebook, Inc. ("Facebook") hereby grants to each recipient of the Software
+("you") a perpetual, worldwide, royalty-free, non-exclusive, irrevocable
+(subject to the termination provision below) license under any Necessary
+Claims, to make, have made, use, sell, offer to sell, import, and otherwise
+transfer the Software. For avoidance of doubt, no license is granted under
+Facebook's rights in any patent claims that are infringed by (i) modifications
+to the Software made by you or any third party or (ii) the Software in
+combination with any software or other technology.<br>
+<br>
+The license granted hereunder will terminate, automatically and without notice,
+if you (or any of your subsidiaries, corporate affiliates or agents) initiate
+directly or indirectly, or take a direct financial interest in, any Patent
+Assertion: (i) against Facebook or any of its subsidiaries or corporate
+affiliates, (ii) against any party if such Patent Assertion arises in whole or
+in part from any software, technology, product or service of Facebook or any of
+its subsidiaries or corporate affiliates, or (iii) against any party relating
+to the Software. Notwithstanding the foregoing, if Facebook or any of its
+subsidiaries or corporate affiliates files a lawsuit alleging patent
+infringement against you in the first instance, and you respond by filing a
+patent infringement counterclaim in that lawsuit against that party that is
+unrelated to the Software, the license granted hereunder will not terminate
+under section (i) of this paragraph due to such counterclaim.<br>
+<br>
+A "Necessary Claim" is a claim of a patent owned by Facebook that is
+necessarily infringed by the Software standing alone.<br>
+
+A "Patent Assertion" is any lawsuit or other action alleging direct, indirect,
+or contributory infringement or inducement to infringe any patent, including a
+cross-claim or counterclaim.</font><br>
+
+</section>
+
+<section>
+    <h1>Kort sagt:</h1>
+	<br/>
+	<p>Facebook, Inc. hereby grants you irrevocable license - subject to the termination provision below<br>
+	</br>
+	The license granted hereunder will terminate [if your product takes] a direct financial interest in, any Patent
+	Assertion: (i) against Facebook or any of its subsidiaries or corporate
+	affiliates<br><br>
+
+    <p><h3>"Du må ikke, lave noget der konkurerer med facebook eller sagsøge facebook for patentbrud."</h3></p>
+</section>
+
+<section>
+    <h1>"De siger på nettet..."</h1>
+	<p>This is the reason why both Google and Microsoft employees are not allowed to use React.js in their work - according to Rob Eisenberg, creator of the Aurelia framework and a former member of the Angular 2 development team. - Written by Jorgé on Saturday July 16, 2016</p>
+</section>
+
+
+<section>
+<h1>Er det så slemt?</h1>
+<p>Arnt Schøning</p>
+<p><img src="img/arnt.png"></p>
+</section>
+
+<section>
+<h1>Office Delve</h1>
+<h3>til Office 365 og SharePoint</h3>
+<p>Arnt Schøning - Tweet</p>
+<p><img src="img/arnt_post.png"></p>
+</section>
+
+<section>
+<h1>Office Delve</h1>
+<p><img src="img/officedelve.png"></p>
+</section>
+
+
+<section>
+<h1>What's next for ReactJS?</h1>
+<p>React Fiber</p>
+<p>React Fiber is an ongoing reimplementation of React's core algorithm. It is the culmination of over two years of research by the React team.<br/>
+<br/>
+The goal of React Fiber is to increase its suitability for areas like animation, layout, and gestures. Its headline feature is incremental rendering: the ability to split rendering work into chunks and spread it out over multiple frames.<br/>
+<br/>
+Other key features include the ability to pause, abort, or reuse work as new updates come in; the ability to assign priority to different types of updates; and new concurrency primitives.</p>
+</section>
+
+<section>
+<h1>What's next for React Developers</h1>
+<iframe src="https://facebook.github.io/react-native/showcase.html" width="1200" height="920" scrolling="no"></iframe>
+</section>
+
+<section>
+    <h1>Mere info:</h1>
+	<br/>
+    <ul>
+        <li>https://facebook.github.io/react</li>
+        <li>CodeSchool - Powering Up With React</li>
+    </ul>
+    <br/>
+    <img src="img/CodeSchool.png">
+</section>
+
+<section>
+    <h1>Spørgsmål?</h1>
+	<br>
+	<img src="img/sillyquestion.png">
+</section>
+
+
+</div> <!-- end of '#slides' -->
+
+<!--<button id="menu-btn" class="button button-clear icon ion-navicon"></button>-->
+
+<div id="menu" class="dark-bg">
+    <div class="title">Keypoint</div>
+    <div class="scroller cf">
+        <ol id="list" class="list"></ol>
+    </div>
+</div>
+
+<div id="build-btn-right" style="position: absolute;bottom:0; right:0; width: 150px; height: 150px;border:solid 0px;z-index:100;"></div>
+<div id="build-btn-left" style="position: absolute;bottom:0; left:0; width: 150px; height: 150px;border:solid 0px;z-index:100"></div>
+
+</div>
+
+<script src="lib/jquery.js"></script>
+<script src="lib/fastclick.js"></script>
+<script src="lib/prettify.js"></script>
+<script src="lib/swipeview.js"></script>
+
+<script src="lib/keypoint.js"></script>
+<script src="lib/slides.js"></script>
+
+</body>
+</html>
