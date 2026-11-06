@@ -69,7 +69,7 @@
   box-shadow: var(--sc-e3), 0 0 0 1px var(--sc-hairline-strong);
 }
 @media (max-width: 860px) {
-  .hero__portrait { bottom: 3.5rem; width: 7rem; }
+  .hero__portrait { bottom: 4.75rem; width: 7rem; }
 }
 .hero__copy {
   position: relative; z-index: var(--sc-z-copy);
@@ -96,11 +96,14 @@
   align-items: flex-start;
   padding-inline: var(--sc-gutter);
   padding-top: clamp(4rem, 17vh, 10rem);
-  gap: clamp(1.5rem, 3vw, 3.5rem);
+  --rail-gap: clamp(1.5rem, 3vw, 3.5rem);
+  gap: var(--rail-gap);
 }
 .rail > * { flex: none; }
 .rail__lead { width: clamp(17rem, 34vw, 30rem); align-self: flex-end; }
 .rail__end { width: clamp(15rem, 24vw, 22rem); align-self: flex-end; }
+/* Luft efter sidste kort. Skal være et rigtigt element, for end-margen og pseudo-elementer tæller ikke med i sporets bredde. */
+.rail__gap { width: var(--sc-gutter); height: 1px; margin-left: calc(var(--rail-gap) * -1); }
 
 /* Tre små AI-figurer, hver med sin egen bevægelse. Kører kun uden "reducer bevægelse". */
 .dancers { display: flex; align-items: flex-end; gap: clamp(1rem, 2vw, 1.75rem); margin-top: var(--sc-5); }
@@ -118,10 +121,13 @@
 /* OpenAI: logoet i en hvid rund flise, der ruller rundt og trækker vejret. */
 .d-openai {
   aspect-ratio: 1; border-radius: 50%; overflow: hidden !important;
-  background: #fff; box-shadow: 0 0 0 1px var(--sc-hairline-strong);
-  display: grid; place-items: center;
+  position: relative; background: #fff; box-shadow: 0 0 0 1px var(--sc-hairline-strong);
 }
-.d-openai img { width: 128%; max-width: none; height: auto; display: block; }
+/* Logoet er et baggrundsbillede, så det ligger præcis i midten af cirklen. */
+.d-openai::before {
+  content: ""; position: absolute; inset: 0;
+  background: url("../img/openai.jpg") 50% 50% / 124% auto no-repeat;
+}
 
 /* Gemini: stjernen pulserer og vrider sig, og tre små gnister glimter rundt om den. */
 .d-gemini { aspect-ratio: 1; }
@@ -138,7 +144,7 @@
   .d-claude__shadow { animation: claude-shadow 0.8s steps(2, jump-none) infinite alternate; }
 
   .d-openai { animation: openai-bob 2.4s ease-in-out infinite; }
-  .d-openai img { animation: openai-roll 6s cubic-bezier(.6, 0, .25, 1) infinite; }
+  .d-openai::before { animation: openai-roll 6s cubic-bezier(.6, 0, .25, 1) infinite; }
 
   .d-gemini__main { animation: gemini-pulse 2.8s ease-in-out infinite; }
   .d-gemini__spark { animation: gemini-spark 2.1s ease-in-out var(--s, 0s) infinite; }
@@ -223,7 +229,27 @@
   box-shadow: var(--sc-e3);
 }
 .poi__list { margin: var(--sc-6) 0 0; }
-.poi__list > div { padding-block: var(--sc-5); border-top: 1px solid var(--sc-hairline); }
+.poi__list > div {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: clamp(1rem, 3vw, 2.5rem); align-items: start;
+  padding-block: var(--sc-5); border-top: 1px solid var(--sc-hairline); }
+.poi__list > div > dt, .poi__list > div > dd { grid-column: 1; }
+/* Logo i højre side. Ens mørke fliser, så de tre står ens. */
+.poi__logo {
+  grid-column: 2; grid-row: 1 / span 2;
+  position: relative; overflow: hidden;
+  width: clamp(3.5rem, 6.5vw, 5.5rem); aspect-ratio: 1; border-radius: var(--sc-r-lg);
+  background: var(--sc-surface) no-repeat 50% 50%;
+  box-shadow: 0 0 0 1px var(--sc-hairline-strong);
+}
+.poi__logo--protek { background-image: url("../img/protek-star.png"); background-size: 100% auto; }
+/* Bloodturn: det hvide B (sort B-ikon gjort hvidt). */
+.poi__logo--bloodturn::before {
+  content: ""; position: absolute; inset: 0;
+  background: url("../img/bloodturn-b.png") 50% 50% / 74% auto no-repeat;
+  filter: brightness(0) invert(1);
+}
+/* TravelMind: kun hjertet, beskåret ud af det hvide logo. */
+.poi__logo--travelmind { background-image: url("../img/travelmind-heart.png"); background-size: 100% auto; }
 .poi__list dt {
   font-family: var(--sc-font-display); font-weight: 600;
   font-size: var(--sc-t-xl); letter-spacing: var(--sc-track-snug);
@@ -252,6 +278,14 @@
 .close__inner { padding: 0 var(--sc-gutter); }
 .close__inner .sc-display { max-width: 16ch; margin-inline: auto; }
 .close__inner .btn { margin-top: var(--sc-7); }
+/* Kontakt toner ind, mens sektionen glider op (view-tidslinje), i stedet for først efter fastlåsning.
+   Uden understøttelse står indholdet bare der. */
+@keyframes close-in { from { opacity: 0; translate: 0 2rem; } to { opacity: 1; translate: 0 0; } }
+@supports (animation-timeline: view()) {
+  .close__inner .sc-display, .close__inner .btn { animation: close-in linear both; animation-timeline: view(); }
+  .close__inner .sc-display { animation-range: entry 0% entry 100%; }
+  .close__inner .btn { animation-range: entry 10% entry 110%; }
+}
 .foot {
   position: absolute; z-index: 5; left: var(--sc-gutter); right: var(--sc-gutter);
   bottom: var(--sc-5);
@@ -292,18 +326,27 @@
   font-size: var(--sc-t-xl); letter-spacing: var(--sc-track-snug);
   color: var(--sc-ink);
 }
+.gh__star { display: inline-block; color: #e3b341; vertical-align: -0.1em; margin-left: 0.1em; }
 .gh__repos span { display: block; margin-top: var(--sc-1); color: var(--sc-ink-soft); font-size: var(--sc-t-sm); }
 @media (max-width: 860px) {
-  .gh { grid-template-columns: 1fr; gap: var(--sc-5); }
-  .gh__num { font-size: clamp(5rem, 30vw, 9rem); }
+  /* Fast topbar: hold tallet fri af den, som årstallet i CV-sektionen. */
+  .gh { grid-template-columns: 1fr; gap: var(--sc-4); padding-top: clamp(5.5rem, 13vh, 7rem); padding-bottom: var(--sc-5); }
+  .gh__num { font-size: clamp(4.5rem, 26vw, 8rem); }
   .gh__repos b { font-size: var(--sc-t-lg); }
 }
 
 /* -------------------------------------------------------------------- mark */
 /* Alt drives af --sc-p (0 til 1) på sektionen. Hver spids har sin egen forsinkelse (--i). */
+@property --enter { syntax: "<number>"; inherits: true; initial-value: 0; }
+@keyframes mark-enter { from { --enter: 0; } to { --enter: 1; } }
+@supports (animation-timeline: view()) {
+  .mark { animation: mark-enter linear both; animation-timeline: view(); animation-range: entry 8% entry 100%; }
+}
 .mark {
-  /* Forløbet er færdigt ved 62 % af scroll. Resten er hvile, så mærket står helt, mens det er pinnet. */
-  --p: clamp(0, calc(var(--sc-p, 0) / 0.62), 1);
+  /* Forløbet starter allerede, mens sektionen glider ind nedefra (--enter, 0 til 1), og fortsætter
+     efter pin (--sc-p). 35 % klares under indskydningen, resten er færdigt ved ca. 33 % af pin-scrollet.
+     Uden scroll-styrede animationer er --enter 0, og forløbet starter ved pin som før. */
+  --p: clamp(0, calc(var(--enter) * 0.35 + var(--sc-p, 0) / 0.5), 1);
   /* f: 0 = mørk silhuet, 1 = tændt. Tændingen sker i anden halvdel. */
   --f: clamp(0, calc((var(--p) - 0.42) / 0.3), 1);
   --neon: calc((1 - var(--f)) * clamp(0, var(--p) * 8, 1));
@@ -376,4 +419,33 @@
   .mark { grid-template-columns: 1fr; align-content: center; gap: var(--sc-3); padding-top: 5rem; }
   .mark__star { max-height: 46vh; }
   .mark__word { font-size: clamp(3rem, 18vw, 6rem); }
+}
+
+/* ------------------------------------------------------------- næste-pil */
+.next {
+  position: fixed; z-index: var(--sc-z-chrome);
+  right: var(--sc-gutter); bottom: max(0.75rem, env(safe-area-inset-bottom));
+  display: inline-flex; align-items: center; gap: var(--sc-3);
+  height: 3rem; padding: 0 1.05rem 0 1.4rem; border: 0; border-radius: var(--sc-r-pill);
+  font-family: var(--sc-font-display); font-weight: 600; font-size: var(--sc-t-sm); line-height: 1; white-space: nowrap;
+  background: color-mix(in oklab, var(--sc-canvas) 70%, transparent);
+  color: var(--sc-ink); cursor: pointer;
+  box-shadow: inset 0 0 0 1px var(--sc-hairline-strong), var(--sc-e2);
+  backdrop-filter: blur(8px);
+  transition: opacity var(--sc-d-fast) var(--sc-ease-out), transform var(--sc-d-fast) var(--sc-ease-out),
+              background var(--sc-d-fast) var(--sc-ease-out), color var(--sc-d-fast) var(--sc-ease-out);
+}
+.next svg { display: block; }
+.next:active { transform: scale(0.94); }
+.next:focus-visible { outline: 2px solid var(--sc-accent); outline-offset: 3px; }
+.next--gone { opacity: 0; visibility: hidden; transform: translateY(0.75rem); pointer-events: none; }
+@media (hover: hover) {
+  .next:hover { background: var(--sc-accent); color: var(--sc-accent-ink); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .next:not(.next--gone) svg { animation: next-nudge 1.8s ease-in-out infinite; }
+}
+@keyframes next-nudge { 0%, 100% { transform: translateY(-2px); } 50% { transform: translateY(3px); } }
+@media (max-width: 860px) {
+  .next { height: 2.75rem; padding: 0 0.9rem 0 1.15rem; }
 }
