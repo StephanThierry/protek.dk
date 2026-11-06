@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="css/scrollcraft.css">
-<link rel="stylesheet" href="css/protek.css">
+<link rel="stylesheet" href="css/scrollcraft.css?v=039fa57f61">
+<link rel="stylesheet" href="css/protek.css?v=0e2f96ea80">
 </head>
 <body>
 
@@ -33,19 +33,37 @@
       <div class="hero__copy" data-sc-cue="0 0.78 0">
         <p class="sc-label">protek.dk · Senior Lead Engineer, TravelMind Group</p>
         <h1 class="sc-display sc-display--xl" data-sc-kinetic="lines">Stephan Thierry</h1>
-        <p class="sc-lede">Velkommen til protek.dk. AI-drevet udvikling og Harness Engineering, bygget på 28 års software, drift og ledelse.</p>
+        <p class="sc-lede"><span data-years-since="1998">28</span> års erfaring med software, drift og ledelse.</p>
       </div>
     </div>
   </section>
 
-  <!-- 2 · Spænding: pin, stilhed før peak -->
-  <section data-sc-act="pin" data-sc-span="3.2" data-sc-drift="#0D1417">
-    <div data-sc-stage class="argument">
-      <span class="argument__line" aria-hidden="true"></span>
-      <p class="argument__cue" data-sc-cue="0 0.32 0">1998. Progress 4GL og en fabrik, der skulle køre.</p>
-      <p class="argument__cue" data-sc-cue="0.26 0.60">Siden da: .NET, booking, PLM og cloud.</p>
-      <p class="argument__cue" data-sc-cue="0.54 0.88">Ledelse af teams, arkitektur, drift. Fra udvikler til CTO.</p>
-      <p class="argument__cue argument__cue--accent" data-sc-cue="0.80 1">Nu bygger jeg rammerne, der gør AI-agenter til noget, man kan stole på.</p>
+  <!-- 2 · Mærket: pin. Stjernen springer ud spids for spids, mens scroll driver den. -->
+  <section id="maerket" data-sc-act="pin" data-sc-span="3" data-sc-drift="#0B1417">
+    <div data-sc-stage class="mark">
+      <svg class="mark__star" viewBox="0 0 1000 1000" role="img" aria-label="Proteks stjerne" focusable="false">
+        <circle class="mark__ring" cx="520" cy="490" r="470" pathLength="1"/>
+        <circle class="mark__ring mark__ring--in" cx="520" cy="490" r="330" pathLength="1"/>
+        <g class="mark__spin">
+          <g class="mark__spikes">
+            <polygon class="sp sp--d" style="--i:0" points="257,197 468,378 520,490 420,412"/>
+            <polygon class="sp sp--d" style="--i:3" points="177,684 450,490 520,490 420,585"/>
+            <polygon class="sp sp--d" style="--i:6" points="717,694 610,537 520,490 580,582"/>
+            <polygon class="sp sp--m" style="--i:1" points="424,45 540,430 505,500 462,400"/>
+            <polygon class="sp sp--m" style="--i:4" points="283,880 465,520 520,490 500,575"/>
+            <polygon class="sp sp--m" style="--i:7" points="925,538 585,458 520,490 612,538"/>
+            <polygon class="sp sp--l" style="--i:2" points="117,352 512,430 520,490 485,528"/>
+            <polygon class="sp sp--l" style="--i:5" points="640,980 572,488 520,470 485,528"/>
+            <polygon class="sp sp--l" style="--i:8" points="731,242 572,488 520,490 512,430"/>
+          </g>
+        </g>
+        <circle class="mark__core" cx="520" cy="490" r="26"/>
+      </svg>
+      <div class="mark__copy">
+        <p class="sc-label" data-sc-cue="0.1 1 0">Mærket · siden 1998</p>
+        <p class="mark__word" aria-label="PROTEK">PROTEK</p>
+        <p class="sc-lede mark__line" data-sc-cue="0.4 1">Protek er en sammentrækning af PROgress for TEKnos, som var mit første store projekt tilbage i 1998.</p>
+      </div>
     </div>
   </section>
 
@@ -158,7 +176,30 @@
 
         <div class="rail__end sc-stack">
           <p class="sc-display sc-display--md">Mange flere projekter.</p>
-          <p class="sc-body">Spørg, hvis du vil høre om dem.</p>
+          <div class="dancers" role="img" aria-label="Claude, OpenAI og Gemini">
+            <svg class="dancer" style="--d:0s" viewBox="0 0 48 48" aria-hidden="true">
+              <g stroke="#D97757" stroke-width="4.4" stroke-linecap="round">
+                <path d="M24 24V4"/><path d="M24 24V5" transform="rotate(30 24 24)"/><path d="M24 24V8" transform="rotate(60 24 24)"/>
+                <path d="M24 24V4" transform="rotate(90 24 24)"/><path d="M24 24V7" transform="rotate(120 24 24)"/><path d="M24 24V5" transform="rotate(150 24 24)"/>
+                <path d="M24 24V4" transform="rotate(180 24 24)"/><path d="M24 24V8" transform="rotate(210 24 24)"/><path d="M24 24V5" transform="rotate(240 24 24)"/>
+                <path d="M24 24V4" transform="rotate(270 24 24)"/><path d="M24 24V7" transform="rotate(300 24 24)"/><path d="M24 24V5" transform="rotate(330 24 24)"/>
+              </g>
+            </svg>
+            <svg class="dancer" style="--d:-0.4s" viewBox="0 0 48 48" aria-hidden="true">
+              <g fill="none" stroke="#E9F0EE" stroke-width="3.2" stroke-linejoin="round">
+                <rect x="18.5" y="3" width="11" height="24" rx="5.5"/>
+                <rect x="18.5" y="3" width="11" height="24" rx="5.5" transform="rotate(60 24 24)"/>
+                <rect x="18.5" y="3" width="11" height="24" rx="5.5" transform="rotate(120 24 24)"/>
+                <rect x="18.5" y="3" width="11" height="24" rx="5.5" transform="rotate(180 24 24)"/>
+                <rect x="18.5" y="3" width="11" height="24" rx="5.5" transform="rotate(240 24 24)"/>
+                <rect x="18.5" y="3" width="11" height="24" rx="5.5" transform="rotate(300 24 24)"/>
+              </g>
+            </svg>
+            <svg class="dancer" style="--d:-0.8s" viewBox="0 0 48 48" aria-hidden="true">
+              <defs><linearGradient id="gem" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#4285F4"/><stop offset=".55" stop-color="#9B72CB"/><stop offset="1" stop-color="#D96570"/></linearGradient></defs>
+              <path fill="url(#gem)" d="M24 1C25.5 14 34 22.500 47 24 34 25.500 25.500 34 24 47 22.500 34 14 25.500 1 24 14 22.500 22.500 14 24 1Z"/>
+            </svg>
+          </div>
         </div>
       </div>
       <div class="cv__track" aria-hidden="true"><span></span></div>
@@ -169,20 +210,22 @@
   <section id="github" data-sc-act="pin" data-sc-span="2.4" data-sc-drift="#0C1316">
     <div data-sc-stage class="gh">
       <div class="gh__stat">
-        <p class="gh__num"><span data-sc-count="0 232" data-sc-count-at="0.06 0.5">0</span></p>
+        <p class="gh__num"><span data-sc-count="0 264" data-sc-count-at="0.06 0.5">0</span></p>
         <p class="sc-label">stjerner på GitHub</p>
       </div>
       <div class="gh__cues">
         <div class="gh__cue sc-stack" data-sc-cue="0 0.5 0">
           <p class="sc-label">Open source · github.com/StephanThierry</p>
-          <h2 class="sc-display sc-display--md"><a href="https://github.com/StephanThierry/nodejs4synologynas" target="_blank" rel="noopener">nodejs4synologynas</a></h2>
-          <p class="sc-body">Trin-for-trin guide til at køre en Node.js-server på en Synology NAS: Express og MariaDB, forever, så den overlever genstart, og reverse proxy med Let's Encrypt. 18 forks og 90 commits.</p>
+          <h2 class="sc-display sc-display--md">Fire områder på GitHub.</h2>
+          <p class="sc-body">Jeg har <span data-gh-repos>23</span> egne offentlige repos. Her er de fire områder, jeg har lagt værktøj og guides ud inden for.</p>
         </div>
         <div class="gh__cue sc-stack" data-sc-cue="0.44 1">
-          <p class="sc-label">47 offentlige repos. Flere af dem:</p>
+          <p class="sc-label">Repos med stjerner</p>
           <ul class="gh__repos">
-            <li><a href="https://github.com/StephanThierry/ftp-delete-action" target="_blank" rel="noopener">ftp-delete-action</a><span>GitHub Action til at slette filer på din ftp. 9 stjerner, MIT.</span></li>
-            <li><a href="https://github.com/StephanThierry/DuplicateVideoRemover" target="_blank" rel="noopener">DuplicateVideoRemover</a><span>Finder dublerede eller ødelagte videofiler. C#, 5 stjerner.</span></li>
+            <li><b>Sikkerhed</b><span>Linux-baseret VPN-relay.</span></li>
+            <li><b>Machine learning</b><span>Multiclass-klassificeringsalgoritme med 99,9 % nøjagtighed.</span></li>
+            <li><b>Serverdrift</b><span>Node.js på Synology NAS, fra opsætning til stabil drift.</span></li>
+            <li><b>DevOps</b><span>GitHub Action, der rydder op på ftp og indgår direkte i GitHub-deployment.</span></li>
           </ul>
         </div>
       </div>
@@ -222,7 +265,7 @@
   <section id="kontakt" data-sc-act="pin" data-sc-span="1.15" data-sc-drift="#0A0E10">
     <div data-sc-stage class="close" data-sc-spotlight>
       <div class="close__inner">
-        <h2 class="sc-display sc-display--lg" data-sc-cue="0.06" data-sc-kinetic="lines">Skal vi bygge noget, der holder?</h2>
+        <h2 class="sc-display sc-display--lg" data-sc-cue="0.06" data-sc-kinetic="lines">Kontakt</h2>
         <a class="btn" href="mailto:stephan@protek.dk" data-sc-magnet="0.26" data-sc-cue="0.06" data-sc-rise="0">Send en mail</a>
       </div>
       <footer class="foot">
@@ -238,8 +281,42 @@
 
 </main>
 
-<script src="js/scrollcraft.js"></script>
+<script src="js/scrollcraft.js?v=f7d603e85c"></script>
 <script>
+  /* Antal års erfaring regnes ud fra startåret, så det følger kalenderen af sig selv. */
+  [].forEach.call(document.querySelectorAll("[data-years-since]"), function (el) {
+    var n = new Date().getFullYear() - parseInt(el.getAttribute("data-years-since"), 10);
+    if (n > 0) el.textContent = n;
+  });
+
+  /* GitHub-tal: cache først (ingen ventetid), friske tal hentes i baggrunden når cachen er over 6 timer gammel. */
+  (function () {
+    var USER = "StephanThierry", KEY = "protek.gh", TTL = 6 * 3600 * 1000;
+    var stars = document.querySelector("[data-sc-count]"), repos = document.querySelector("[data-gh-repos]");
+    var cache = null;
+    try { cache = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
+    if (cache && cache.stars > 0 && stars) {
+      stars.setAttribute("data-sc-count", "0 " + cache.stars);
+      if (repos && cache.repos) repos.textContent = cache.repos;
+    }
+    if (cache && Date.now() - cache.t < TTL) return;
+    fetch("https://api.github.com/users/" + USER + "/repos?per_page=100&type=owner")
+      .then(function (r) { if (!r.ok) throw 0; return r.json(); })
+      .then(function (list) {
+        list = list.filter(function (r) { return !r.fork; }); /* kun egne repos, ikke forks */
+        var sum = 0; list.forEach(function (r) { sum += r.stargazers_count || 0; });
+        if (!list.length || !sum) return;
+        try { localStorage.setItem(KEY, JSON.stringify({ t: Date.now(), stars: sum, repos: list.length })); } catch (e) {}
+      })
+      .catch(function () {});
+  })();
+
+  /* Mobil: ingen visk-afsløring. Portrættet er synligt fra start og toner ud, når det forlader skærmen (se .poi__fig i CSS). */
+  if (matchMedia("(max-width: 860px)").matches) {
+    var fig = document.querySelector(".poi__fig");
+    if (fig) { fig.removeAttribute("data-sc-reveal"); fig.removeAttribute("data-sc-reveal-at"); }
+  }
+
   ScrollCraft.mount(document.body);
 
   /* Signaturen: årstallet i hjørnet følger det kort, der står midt i sporet. */

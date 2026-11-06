@@ -80,23 +80,6 @@
 .hero__copy .sc-label { color: var(--sc-accent); }
 .hero__copy .sc-lede { color: var(--sc-ink-soft); max-width: 40ch; }
 
-/* ---------------------------------------------------------------- argument */
-.argument { display: grid; align-items: center; padding: 0 var(--sc-gutter); }
-.argument__cue {
-  grid-area: 1 / 1; margin: 0;
-  max-width: 21ch;
-  font-family: var(--sc-font-display); font-weight: 500;
-  font-size: var(--sc-t-3xl);
-  line-height: var(--sc-leading-tight); letter-spacing: var(--sc-track-tight);
-  text-wrap: balance;
-}
-.argument__cue--accent { color: var(--sc-accent); max-width: 24ch; }
-.argument__line {
-  position: absolute; left: var(--sc-gutter); right: var(--sc-gutter); bottom: clamp(2.5rem, 9vh, 6rem);
-  height: 1px; background: var(--sc-accent);
-  transform-origin: 0 50%; transform: scaleX(var(--sc-p, 0));
-}
-
 /* ---------------------------------------------------------------------- cv */
 .cv { display: flex; flex-direction: column; justify-content: center; }
 .cv__year {
@@ -118,6 +101,18 @@
 .rail > * { flex: none; }
 .rail__lead { width: clamp(17rem, 34vw, 30rem); align-self: flex-end; }
 .rail__end { width: clamp(15rem, 24vw, 22rem); align-self: flex-end; }
+
+/* Tre små AI-ikoner, der danser. Forskudt i tid, så de ikke går i takt. */
+.dancers { display: flex; align-items: flex-end; gap: var(--sc-5); margin-top: var(--sc-5); }
+.dancer { width: clamp(2.25rem, 3.2vw, 3rem); height: auto; overflow: visible; transform-origin: 50% 100%; }
+@media (prefers-reduced-motion: no-preference) {
+  .dancer { animation: dance 0.9s ease-in-out var(--d, 0s) infinite alternate; }
+}
+@keyframes dance {
+  0%   { transform: translateY(0) rotate(-14deg) scale(1.08, 0.88); }
+  50%  { transform: translateY(-34%) rotate(0deg) scale(0.94, 1.08); }
+  100% { transform: translateY(0) rotate(14deg) scale(1.08, 0.88); }
+}
 .item {
   width: clamp(17rem, 27vw, 25rem);
   padding-top: var(--sc-4);
@@ -187,6 +182,18 @@
 }
 .poi__list dd { margin: var(--sc-2) 0 0; max-width: var(--sc-measure); color: var(--sc-ink-soft); text-wrap: pretty; }
 .poi__list a { color: var(--sc-accent); white-space: nowrap; margin-left: 0.4em; }
+/* Mobil: portrættet er helt synligt og viskes væk mod venstre, mens det forlader skærmen i toppen
+   (samme visk som på desktop, bare omvendt). */
+@keyframes poi-fig-out { from { clip-path: inset(0 0 0 0); } to { clip-path: inset(0 100% 0 0); } }
+@media (max-width: 860px) {
+  @supports (animation-timeline: view()) {
+    .poi__fig {
+      animation: poi-fig-out linear both;
+      animation-timeline: view();
+      animation-range: exit 10% exit 90%;
+    }
+  }
+}
 @media (max-width: 860px) {
   .poi__grid { grid-template-columns: 1fr; }
   .portrait { max-width: 22rem; }
@@ -231,15 +238,94 @@
 .gh__cue { grid-area: 1 / 1; align-self: center; }
 .gh__cue .sc-display a { text-decoration-color: var(--sc-accent); }
 .gh__repos { list-style: none; margin: var(--sc-5) 0 0; padding: 0; }
-.gh__repos li { padding-block: var(--sc-4); border-top: 1px solid var(--sc-hairline); }
-.gh__repos a {
+.gh__repos li { padding-block: var(--sc-3); border-top: 1px solid var(--sc-hairline); }
+.gh__repos b {
   font-family: var(--sc-font-display); font-weight: 600;
   font-size: var(--sc-t-xl); letter-spacing: var(--sc-track-snug);
-  text-decoration-color: var(--sc-accent);
+  color: var(--sc-ink);
 }
 .gh__repos span { display: block; margin-top: var(--sc-1); color: var(--sc-ink-soft); font-size: var(--sc-t-sm); }
 @media (max-width: 860px) {
   .gh { grid-template-columns: 1fr; gap: var(--sc-5); }
   .gh__num { font-size: clamp(5rem, 30vw, 9rem); }
-  .gh__repos a { font-size: var(--sc-t-lg); }
+  .gh__repos b { font-size: var(--sc-t-lg); }
+}
+
+/* -------------------------------------------------------------------- mark */
+/* Alt drives af --sc-p (0 til 1) på sektionen. Hver spids har sin egen forsinkelse (--i). */
+.mark {
+  /* Forløbet er færdigt ved 62 % af scroll. Resten er hvile, så mærket står helt, mens det er pinnet. */
+  --p: clamp(0, calc(var(--sc-p, 0) / 0.62), 1);
+  /* f: 0 = mørk silhuet, 1 = tændt. Tændingen sker i anden halvdel. */
+  --f: clamp(0, calc((var(--p) - 0.42) / 0.3), 1);
+  --neon: calc((1 - var(--f)) * clamp(0, var(--p) * 8, 1));
+  --blue-d: #3f7a8f; --blue-m: #4f96aa; --blue-l: #5ba9bf;
+  display: grid; align-items: center;
+  grid-template-columns: minmax(0, 6fr) minmax(0, 6fr);
+  gap: clamp(1rem, 4vw, 4rem);
+  padding: clamp(4.5rem, 10vh, 6rem) var(--sc-gutter) var(--sc-5);
+}
+.mark__spikes { filter: drop-shadow(0 0 calc(var(--neon) * 5px) rgb(60 120 255 / calc(var(--neon) * 0.95))) drop-shadow(0 0 calc(var(--neon) * 16px) rgb(30 80 255 / calc(var(--neon) * 0.6))); }
+.mark__star {
+  width: 100%; max-height: 78vh; aspect-ratio: 1; justify-self: center;
+  overflow: visible;
+  filter: drop-shadow(0 0 calc(var(--f) * 38px) rgb(91 169 191 / 0.3));
+}
+.mark__spin {
+  transform-box: view-box; transform-origin: 520px 490px;
+  /* ruller fra -50° og lander ved p = 0.8, så hviler den */
+  transform: rotate(calc((1 - clamp(0, var(--p) / 0.8, 1)) * -50deg));
+}
+.sp {
+  transform-box: view-box; transform-origin: 520px 490px;
+  /* start = 0.02 + i * 0.03, vokser over 0.16 af forløbet */
+  --g: clamp(0, calc((var(--p) - 0.02 - var(--i) * 0.03) / 0.16), 1);
+  --e: calc(1 - (1 - var(--g)) * (1 - var(--g)) * (1 - var(--g)));
+  /* skår: hver spids flyver ind roteret og samles */
+  transform: rotate(calc((1 - var(--e)) * (var(--i) * 2 - 8) * 6deg)) scale(var(--e));
+  opacity: clamp(0, calc(var(--g) * 6), 1);
+}
+.sp { --c2: color-mix(in oklab, var(--c) calc(var(--f) * 100%), #050913); stroke: var(--c2); fill: var(--c2); stroke-width: 22; stroke-linejoin: round; paint-order: stroke; }
+.sp--d { --c: var(--blue-d); }
+.sp--m { --c: var(--blue-m); }
+.sp--l { --c: var(--blue-l); }
+.mark__ring {
+  fill: none; stroke: color-mix(in oklab, var(--sc-accent) calc(var(--f) * 100%), #3a6cff); stroke-width: 1.5; vector-effect: non-scaling-stroke;
+  stroke-dasharray: 1; stroke-dashoffset: calc(1 - clamp(0, (var(--p) - 0.1) / 0.7, 1));
+  opacity: 0.35; transform-box: view-box; transform-origin: 520px 490px; transform: rotate(-90deg);
+}
+.mark__ring--in { stroke: var(--blue-l); opacity: 0.25; stroke-dashoffset: calc(clamp(0, (var(--p) - 0.15) / 0.7, 1) - 1); }
+.mark__core {
+  fill: #fff; transform-box: fill-box; transform-origin: center;
+  --g: clamp(0, calc((var(--p) - 0.02) / 0.1), 1);
+  transform: scale(calc(var(--g) * (1 + (1 - clamp(0, var(--p) / 0.5, 1)) * 1.2)));
+  opacity: calc(var(--g) * (1 - clamp(0, (var(--p) - 0.5) / 0.3, 1)));
+}
+
+.mark__copy { position: relative; z-index: 2; }
+.mark__copy .sc-label { color: var(--sc-accent); }
+.mark__word {
+  margin: var(--sc-3) 0 0;
+  font-family: var(--sc-font-display); font-weight: 700;
+  font-size: clamp(3.2rem, 11vw, 11rem);
+  line-height: 0.85; letter-spacing: -0.04em;
+  color: transparent;
+  -webkit-text-stroke: 1px color-mix(in oklab, var(--sc-accent) 55%, transparent);
+  /* fyldet fejer ind fra venstre mellem p = 0.45 og 0.9 */
+  background: linear-gradient(90deg, var(--sc-ink) 0, var(--sc-ink) calc(clamp(0, (var(--p) - 0.45) / 0.45, 1) * 100%), transparent calc(clamp(0, (var(--p) - 0.45) / 0.45, 1) * 100%));
+  -webkit-background-clip: text; background-clip: text;
+  padding-right: 0.08em;
+  translate: calc((1 - clamp(0, var(--p) / 0.5, 1)) * 3rem) 0;
+  opacity: clamp(0, calc(var(--p) * 5), 1);
+}
+.mark__line { margin-top: var(--sc-5); max-width: 36ch; color: var(--sc-ink-soft); }
+
+@media (prefers-reduced-motion: reduce) {
+  #maerket { --sc-p: 1 !important; }
+}
+
+@media (max-width: 860px) {
+  .mark { grid-template-columns: 1fr; align-content: center; gap: var(--sc-3); padding-top: 5rem; }
+  .mark__star { max-height: 46vh; }
+  .mark__word { font-size: clamp(3rem, 18vw, 6rem); }
 }
