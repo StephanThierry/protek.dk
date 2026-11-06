@@ -1,26 +1,17 @@
-# [Start Bootstrap](http://startbootstrap.com/) - [Agency](http://startbootstrap.com/template-overviews/agency/)
+# protek.dk
 
-[Agency](http://startbootstrap.com/template-overviews/agency/) is a one page agency portfolio theme for [Bootstrap](http://getbootstrap.com/) created by [Start Bootstrap](http://startbootstrap.com/). This theme features several content sections, a responsive portfolio grid with hover effects, full page portfolio item modals, a responsive timeline, and a working PHP contact form.
+Stephan Thierrys personlige side. Statisk HTML, ingen build-step.
 
-## Getting Started
+## Nyt design (feature/newdesign)
 
-To use this theme, choose one of the following options to get started:
-* Download the latest release on Start Bootstrap
-* Fork this repository on GitHub
+Siden er bygget om efter [scroll-craft](https://github.com/nateherkai/scroll-craft) (MIT):
 
-## Bugs and Issues
+- `css/scrollcraft.css` og `js/scrollcraft.js` er motoren, uændret fra scroll-craft. Rediger dem ikke.
+- `css/protek.css` er sidens egne farver, typografi og layout.
+- `index.html` er semantisk HTML, drevet af `data-sc-*` attributter.
 
-Have a bug or an issue with this theme? [Open a new issue](https://github.com/IronSummitMedia/startbootstrap-agency/issues) here on GitHub or leave a comment on the [template overview page at Start Bootstrap](http://startbootstrap.com/template-overviews/agency/).
+Grammatik: typographic poster. Signaturen er CV-sporet, hvor årstallet i hjørnet følger det kort, der står midt i sporet.
 
-## Creator
+Lokalt: server mappen med en vilkårlig statisk server og åbn `/`.
 
-Start Bootstrap was created by and is maintained by **David Miller**, Managing Parter at [Iron Summit Media Strategies](http://www.ironsummitmedia.com/).
-
-* https://twitter.com/davidmillerskt
-* https://github.com/davidtmiller
-
-Start Bootstrap is based on the [Bootstrap](http://getbootstrap.com/) framework created by [Mark Otto](https://twitter.com/mdo) and [Jacob Thorton](https://twitter.com/fat).
-
-## Copyright and License
-
-Copyright 2014 Iron Summit Media Strategies, LLC. Code released under the [Apache 2.0](https://github.com/IronSummitMedia/startbootstrap-agency/blob/gh-pages/LICENSE) license.
+Det gamle Bootstrap-tema ligger stadig i `css/agency.css` m.fl. og bruges ikke af `index.html`. `react/` er den selvstændige ReactJS-præsentation.
