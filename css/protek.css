@@ -102,16 +102,64 @@
 .rail__lead { width: clamp(17rem, 34vw, 30rem); align-self: flex-end; }
 .rail__end { width: clamp(15rem, 24vw, 22rem); align-self: flex-end; }
 
-/* Tre små AI-ikoner, der danser. Forskudt i tid, så de ikke går i takt. */
-.dancers { display: flex; align-items: flex-end; gap: var(--sc-5); margin-top: var(--sc-5); }
-.dancer { width: clamp(2.25rem, 3.2vw, 3rem); height: auto; overflow: visible; transform-origin: 50% 100%; }
-@media (prefers-reduced-motion: no-preference) {
-  .dancer { animation: dance 0.9s ease-in-out var(--d, 0s) infinite alternate; }
+/* Tre små AI-figurer, hver med sin egen bevægelse. Kører kun uden "reducer bevægelse". */
+.dancers { display: flex; align-items: flex-end; gap: clamp(1rem, 2vw, 1.75rem); margin-top: var(--sc-5); }
+.dancers > * { flex: none; height: clamp(2.6rem, 3.6vw, 3.4rem); width: auto; overflow: visible; }
+
+/* Clawd (Claude-maskotten): pixelfigur, der danser. Arme op og ned i modtakt, ben skifter, øjne blinker. */
+.d-claude { aspect-ratio: 64 / 44; }
+.d-claude__arm { transform-box: fill-box; transform-origin: 0 100%; }
+.d-claude__arm--r { transform-origin: 100% 100%; }
+.d-claude__leg { transform-box: fill-box; transform-origin: 50% 0; }
+.d-claude__eyes { transform-box: fill-box; transform-origin: 50% 50%; }
+.d-claude__all { transform-box: view-box; transform-origin: 50% 100%; }
+.d-claude__shadow { transform-box: fill-box; transform-origin: 50% 50%; }
+
+/* OpenAI: logoet i en hvid rund flise, der ruller rundt og trækker vejret. */
+.d-openai {
+  aspect-ratio: 1; border-radius: 50%; overflow: hidden !important;
+  background: #fff; box-shadow: 0 0 0 1px var(--sc-hairline-strong);
+  display: grid; place-items: center;
 }
-@keyframes dance {
-  0%   { transform: translateY(0) rotate(-14deg) scale(1.08, 0.88); }
-  50%  { transform: translateY(-34%) rotate(0deg) scale(0.94, 1.08); }
-  100% { transform: translateY(0) rotate(14deg) scale(1.08, 0.88); }
+.d-openai img { width: 128%; max-width: none; height: auto; display: block; }
+
+/* Gemini: stjernen pulserer og vrider sig, og tre små gnister glimter rundt om den. */
+.d-gemini { aspect-ratio: 1; }
+.d-gemini__main { transform-box: fill-box; transform-origin: 50% 50%; }
+.d-gemini__spark { transform-box: fill-box; transform-origin: 50% 50%; opacity: 0; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .d-claude__all  { animation: claude-hop 0.8s steps(2, jump-none) infinite alternate; }
+  .d-claude__arm--l { animation: claude-arm-l 0.8s steps(3, jump-none) infinite alternate; }
+  .d-claude__arm--r { animation: claude-arm-r 0.8s steps(3, jump-none) infinite alternate; }
+  .d-claude__leg  { animation: claude-leg 0.8s steps(2, jump-none) infinite alternate; }
+  .d-claude__leg[style*="--k:1"] { animation-direction: alternate-reverse; }
+  .d-claude__eyes { animation: claude-blink 3.6s steps(1, end) infinite; }
+  .d-claude__shadow { animation: claude-shadow 0.8s steps(2, jump-none) infinite alternate; }
+
+  .d-openai { animation: openai-bob 2.4s ease-in-out infinite; }
+  .d-openai img { animation: openai-roll 6s cubic-bezier(.6, 0, .25, 1) infinite; }
+
+  .d-gemini__main { animation: gemini-pulse 2.8s ease-in-out infinite; }
+  .d-gemini__spark { animation: gemini-spark 2.1s ease-in-out var(--s, 0s) infinite; }
+}
+@keyframes claude-hop    { from { transform: translateY(0); } to { transform: translateY(-5px); } }
+@keyframes claude-arm-l  { from { transform: rotate(0deg); } to { transform: rotate(-62deg); } }
+@keyframes claude-arm-r  { from { transform: rotate(-62deg); } to { transform: rotate(0deg); } }
+@keyframes claude-leg    { from { transform: translateY(0); } to { transform: translateY(-3px); } }
+@keyframes claude-blink  { 0%, 92%, 100% { transform: scaleY(1); } 94%, 98% { transform: scaleY(0.12); } }
+@keyframes claude-shadow { from { transform: scaleX(1); opacity: 1; } to { transform: scaleX(0.82); opacity: 0.7; } }
+
+@keyframes openai-bob  { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-14%) scale(1.07); } }
+@keyframes openai-roll { 0%, 35% { transform: rotate(0deg); } 80%, 100% { transform: rotate(360deg); } }
+
+@keyframes gemini-pulse {
+  0%, 100% { transform: scale(0.86) rotate(0deg); }
+  50%      { transform: scale(1.12) rotate(90deg); }
+}
+@keyframes gemini-spark {
+  0%, 100% { opacity: 0; transform: scale(0.2) rotate(0deg); }
+  50%      { opacity: 1; transform: scale(1.15) rotate(45deg); }
 }
 .item {
   width: clamp(17rem, 27vw, 25rem);
