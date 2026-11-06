@@ -25,7 +25,7 @@
   pointer-events: none;
 }
 .bar > * { pointer-events: auto; }
-.bar__mark img { height: 1.5rem; width: auto; }
+.bar__mark img { height: 2rem; width: auto; }
 
 .btn {
   display: inline-flex; align-items: center;
@@ -55,11 +55,21 @@
   position: absolute; inset: clamp(5rem, 15vh, 9rem) 0 auto 0;
   margin: 0; text-align: center;
   font-family: var(--sc-font-display); font-weight: 700;
-  font-size: clamp(5rem, 24vw, 26rem);
+  font-size: clamp(4.5rem, 23.5vw, 25rem);
   line-height: 0.8; letter-spacing: -0.05em;
   color: transparent;
-  -webkit-text-stroke: 1px color-mix(in oklab, var(--sc-ink) 16%, transparent);
+  -webkit-text-stroke: 1px color-mix(in oklab, var(--sc-accent) 38%, transparent);
   user-select: none;
+}
+.hero__portrait {
+  position: absolute; z-index: 2;
+  right: var(--sc-gutter); bottom: clamp(5rem, 17vh, 11rem);
+  width: clamp(7rem, 22vw, 20rem); height: auto; aspect-ratio: 1;
+  object-fit: cover; border-radius: var(--sc-r-lg);
+  box-shadow: var(--sc-e3), 0 0 0 1px var(--sc-hairline-strong);
+}
+@media (max-width: 860px) {
+  .hero__portrait { bottom: 3.5rem; width: 7rem; }
 }
 .hero__copy {
   position: relative; z-index: var(--sc-z-copy);
