@@ -2,7 +2,7 @@
 # Run: powershell -NoProfile -File deploy.ps1
 # Target folder and public URL are read from deploy.config.psd1 (not in git) - see deploy.config.example.psd1.
 # The root is NOT mirrored: the web folder holds other things (apk, react, upload ...) that do not live in this repo.
-# Only the folders the site owns (assets, designs, blender) are mirrored; index.html and img are copied on top.
+# Only the folders the site owns (assets, models, designs, blender) are mirrored; index.html and img are copied on top.
 # Vite gives js/css hashed file names, so the Cloudflare cache never serves stale files.
 $ErrorActionPreference = 'Stop'
 $cfgPath = Join-Path $PSScriptRoot 'deploy.config.psd1'
@@ -24,6 +24,6 @@ function Sync($from, $to, [switch]$Mirror) {
 
 Copy-Item "$src\index.html" "$dst\index.html" -Force
 Sync "$src\img" "$dst\img"
-foreach ($d in 'assets', 'designs', 'blender') { Sync "$src\$d" "$dst\$d" -Mirror }
+foreach ($d in 'assets', 'models', 'designs', 'blender') { Sync "$src\$d" "$dst\$d" -Mirror }
 
 Write-Host "Published to $dst  ->  $($cfg.PublicUrl)"
