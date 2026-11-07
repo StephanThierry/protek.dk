@@ -103,6 +103,17 @@ a { color: inherit; }
   position: fixed; z-index: 20; right: 0; top: 50%; transform: translateY(-50%);
   padding: 1.5rem clamp(12px, 2vw, 2rem) 1.5rem 3rem; /* hele området om menuen er klikbart med hånd-cursor */
 }
+/* Mørk flade bag menuen, der toner frem ved hover, så teksten står klart over partiklerne. */
+.rail-nav::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  border-radius: 18px 0 0 18px;
+  background: linear-gradient(to right, rgb(5 9 11 / 0.55), rgb(5 9 11 / 0.88) 45%);
+  box-shadow: inset 1px 0 0 var(--line), 0 0 60px rgb(5 9 11 / 0.6);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  opacity: 0; transition: opacity 0.45s var(--ease);
+}
+.rail-nav:hover::before, .rail-nav:focus-within::before { opacity: 1; }
+.rail-nav:hover span, .rail-nav:focus-within span { opacity: 0.7; transform: none; }
 .rail-nav ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.9rem; }
 .rail-nav a {
   display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem;
