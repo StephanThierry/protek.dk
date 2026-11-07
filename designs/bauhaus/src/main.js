@@ -5,13 +5,13 @@ import { jar } from './jar.js';
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const root = document.documentElement;
 
-// Antal års erfaring følger kalenderen.
+// Years of experience follow the calendar.
 document.querySelectorAll('[data-years-since]').forEach((el) => {
   const n = new Date().getFullYear() - parseInt(el.dataset.yearsSince, 10);
   if (n > 0) el.textContent = n;
 });
 
-// Scroll-drevne CSS-animationer, hvor browseren kan. Ellers et IntersectionObserver-fald-tilbage.
+// Scroll-driven CSS animations where supported, otherwise an IntersectionObserver fallback.
 const sda = CSS.supports('animation-timeline: view()');
 if (!sda) {
   root.classList.add('no-sda');
@@ -19,13 +19,13 @@ if (!sda) {
   document.querySelectorAll('.job, .origin__stage, .poi__card, .topics li').forEach((el) => io.observe(el));
 }
 
-// --------------------------------------------------------- legepladsen
+// --------------------------------------------------------- playground
 document.fonts.ready.then(() => {
   try { playground(document.querySelector('.play'), { reduced }); }
-  catch (e) { console.warn('Fysik slået fra:', e); }
+  catch (e) { console.warn('Physics disabled:', e); }
 });
 
-// --------------------------------------------------------- CV-filter med View Transitions
+// --------------------------------------------------------- CV filter with View Transitions
 const jobs = [...document.querySelectorAll('.job')];
 jobs.forEach((j, i) => (j.style.viewTransitionName = `job-${i}`));
 document.querySelectorAll('.chip').forEach((chip) => {
@@ -41,7 +41,7 @@ document.querySelectorAll('.chip').forEach((chip) => {
   });
 });
 
-// --------------------------------------------------------- GitHub-krukken
+// --------------------------------------------------------- GitHub jar
 const countEl = document.querySelector('[data-gh-count]');
 const reposEl = document.querySelector('[data-gh-repos]');
 const theJar = jar(document.querySelector('.jar'), { reduced, counter: (n) => (countEl.textContent = n) });
@@ -49,7 +49,7 @@ const theJar = jar(document.querySelector('.jar'), { reduced, counter: (n) => (c
 (function githubStats() {
   const USER = 'StephanThierry', KEY = 'protek.gh', TTL = 6 * 3600 * 1000;
   let cache = null;
-  try { cache = JSON.parse(localStorage.getItem(KEY)); } catch (e) { /* privat vindue */ }
+  try { cache = JSON.parse(localStorage.getItem(KEY)); } catch (e) { /* private window */ }
   theJar.setTarget(cache && cache.stars > 0 ? cache.stars : 264);
   if (cache?.repos) reposEl.textContent = cache.repos;
   if (cache && Date.now() - cache.t < TTL) return;
@@ -61,12 +61,12 @@ const theJar = jar(document.querySelector('.jar'), { reduced, counter: (n) => (c
       if (!list.length || !sum) return;
       reposEl.textContent = list.length;
       theJar.setTarget(sum);
-      try { localStorage.setItem(KEY, JSON.stringify({ t: Date.now(), stars: sum, repos: list.length })); } catch (e) { /* ignorer */ }
+      try { localStorage.setItem(KEY, JSON.stringify({ t: Date.now(), stars: sum, repos: list.length })); } catch (e) { /* ignore */ }
     })
     .catch(() => {});
 })();
 
-// --------------------------------------------------------- aktiv sektion i menuen
+// --------------------------------------------------------- active section in the menu
 const links = [...document.querySelectorAll('.top__nav a')];
 const secs = links.map((a) => document.querySelector(a.getAttribute('href')));
 const navIO = new IntersectionObserver((ents) => {

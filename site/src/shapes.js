@@ -1,5 +1,5 @@
-// Formerne, partiklerne samler sig i. Hver form er N punkter (xyz) + N farver (rgb).
-// Alle punkter er i verdenskoordinater omkring (0,0,0); layout-forskydning lægges på i main.js.
+// The shapes the particles assemble into. Each shape is N points (xyz) + N colors (rgb).
+// All points are in world space around (0,0,0); layout offset is applied in main.js.
 
 const TAU = Math.PI * 2;
 
@@ -24,7 +24,7 @@ function mixc(a, b, t) {
   return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 }
 
-// Lille deterministisk PRNG, så formerne er ens ved hver genopbygning (resize).
+// Small deterministic PRNG so shapes are identical on each rebuild (resize).
 function rng(seed) {
   let s = seed >>> 0;
   return () => {
@@ -65,9 +65,9 @@ function polyArea(p) {
   return Math.abs(a / 2);
 }
 
-// ---------------------------------------------------------------- formerne
+// ---------------------------------------------------------------- shapes
 
-// 0 · Tåge: en levende kugleskal med en svag galaksearm. Hero.
+// 0 · Nebula: a living spherical shell with a faint galaxy arm. Hero.
 function nebula(i, r, out, col) {
   const u = r();
   if (u < 0.72) {
@@ -79,7 +79,7 @@ function nebula(i, r, out, col) {
     const t = (out[1] / rad) * 0.5 + 0.5;
     col.push(...mixc(PAL.teal, PAL.mint, t * r()));
   } else {
-    // ring/skive rundt om kuglen
+    // ring/disc around the sphere
     const a = TAU * r(), rad = 3.4 + r() * 2.2;
     out[0] = Math.cos(a) * rad;
     out[1] = gauss(r) * 0.06 + Math.sin(a) * rad * 0.18;
@@ -88,7 +88,7 @@ function nebula(i, r, out, col) {
   }
 }
 
-// 1 · Protek-stjernen, punkterne taget direkte fra SVG-logoet (viewBox 1000, centrum 520,490).
+// 1 · The Protek star, points taken directly from the SVG logo (viewBox 1000, center 520,490).
 const STAR = [
   ['d', [[257, 197], [468, 378], [520, 490], [420, 412]]],
   ['d', [[177, 684], [450, 490], [520, 490], [420, 585]]],
@@ -117,19 +117,19 @@ function star(i, r, out, col) {
   const [kind, poly] = STAR[idx];
   const [x, y] = samplePoly(r, poly);
   out[0] = x; out[1] = y;
-  // spidserne løfter sig ud mod beskueren, mere jo længere fra centrum
+  // tips lift toward the viewer, more the farther from center
   out[2] = (r() - 0.5) * 0.18 + Math.hypot(x, y) * 0.08 * (kind === 'l' ? 1 : kind === 'm' ? 0 : -1);
   col.push(...(kind === 'd' ? PAL.blueD : kind === 'm' ? PAL.blueM : PAL.blueL));
 }
 
-// 2 · Karriere-helix: en dobbeltspiral langs x, med en lysende knude per arbejdsplads.
+// 2 · Career helix: a double spiral along x, with a glowing node per workplace.
 export const HELIX_LEN = 34;
 export const HELIX_NODES = 10;
 function helix(i, r, out, col) {
   const u = r();
   const R = 1.25;
   if (u < 0.16) {
-    // knuder (arbejdspladser)
+    // nodes (workplaces)
     const n = Math.floor(r() * HELIX_NODES);
     const x = -HELIX_LEN / 2 + (n + 0.5) * (HELIX_LEN / HELIX_NODES);
     const th = TAU * r(), ph = Math.acos(2 * r() - 1), rad = 0.55 * Math.cbrt(r());
@@ -143,7 +143,7 @@ function helix(i, r, out, col) {
   const x = -HELIX_LEN / 2 - 2 + t * (HELIX_LEN + 4);
   const a = x * 0.9;
   if (u < 0.3) {
-    // tværstænger mellem strengene
+    // rungs between the strands
     const k = Math.round(a / 0.9) * 0.9, s = r() * 2 - 1;
     const xx = k / 0.9;
     out[0] = xx; out[1] = Math.cos(k) * R * s; out[2] = Math.sin(k) * R * s;
@@ -157,7 +157,7 @@ function helix(i, r, out, col) {
   col.push(...mixc(PAL.teal, PAL.violet, t));
 }
 
-// 3 · GitHub-stjerne: femtakket, med volumen.
+// 3 · GitHub star: five-pointed, with volume.
 const GH = (() => {
   const p = [];
   for (let k = 0; k < 10; k++) {
@@ -169,7 +169,7 @@ const GH = (() => {
 function ghStar(i, r, out, col) {
   const u = r();
   if (u < 0.3) {
-    // kanter
+    // edges
     const k = Math.floor(r() * 10), a = GH[k], b = GH[(k + 1) % 10], t = r();
     out[0] = a[0] + (b[0] - a[0]) * t; out[1] = a[1] + (b[1] - a[1]) * t; out[2] = (r() - 0.5) * 0.5;
     col.push(...PAL.ice);
@@ -178,20 +178,20 @@ function ghStar(i, r, out, col) {
     out[0] = x; out[1] = y; out[2] = (r() - 0.5) * 0.5 * (1 - Math.hypot(x, y) / 3.2);
     col.push(...mixc(PAL.gold, PAL.coral, Math.hypot(x, y) / 3));
   } else {
-    // støv omkring
+    // surrounding dust
     const a = TAU * r(), rad = 3.6 + r() * 3;
     out[0] = Math.cos(a) * rad; out[1] = Math.sin(a) * rad; out[2] = gauss(r) * 1.2;
     col.push(...mixc(PAL.deep, PAL.gold, r() * 0.4));
   }
 }
 
-// 4 · Knude: torus-knude (2,3). Points of interest, alt hænger sammen.
+// 4 · Knot: (2,3) torus knot. Points of interest, everything is connected.
 function knot(i, r, out, col) {
   const t = r() * TAU, p = 2, q = 3;
   const cx = (2 + Math.cos(q * t)) * Math.cos(p * t);
   const cy = (2 + Math.cos(q * t)) * Math.sin(p * t);
   const cz = -Math.sin(q * t);
-  // tangent og normaler via differens
+  // tangent and normals via finite differences
   const e = 0.001, t2 = t + e;
   const nx = (2 + Math.cos(q * t2)) * Math.cos(p * t2) - cx;
   const ny = (2 + Math.cos(q * t2)) * Math.sin(p * t2) - cy;
@@ -209,21 +209,21 @@ function knot(i, r, out, col) {
   col.push(...mixc(PAL.violet, PAL.mint, (Math.sin(t * 3) + 1) / 2));
 }
 
-// 5 · Prisme: én hvid lysstråle (legacy) spaltes i fem farver (de fem AI-designs). Designs.
-const PR_A = [0, 1.3], PR_B = [-1.35, -1.05], PR_C = [1.35, -1.05]; // trekanten, spids opad
-const PR_D = 0.6;                                                    // halv dybde
+// 5 · Prism: one white beam (legacy) splits into five colors (the five AI designs). Designs.
+const PR_A = [0, 1.3], PR_B = [-1.35, -1.05], PR_C = [1.35, -1.05]; // the triangle, apex up
+const PR_D = 0.6;                                                    // half depth
 const lerp2 = (p, q, t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
-const PR_IN = lerp2(PR_A, PR_B, 0.55);   // hvor strålen rammer venstre flade
-const PR_OUT = lerp2(PR_A, PR_C, 0.6);   // hvor farverne forlader højre flade
-const PR_SRC = [-3.4, -0.75];            // strålens start
-const PR_SHIFT = -0.55;                  // centrerer figuren vandret
-// Rækkefølge som et spektrum: Bauhaus, Plakat, Partikler, Tidende, Ebru.
+const PR_IN = lerp2(PR_A, PR_B, 0.55);   // where the beam hits the left face
+const PR_OUT = lerp2(PR_A, PR_C, 0.6);   // where the colors exit the right face
+const PR_SRC = [-3.4, -0.75];            // beam start
+const PR_SHIFT = -0.55;                  // centers the figure horizontally
+// Ordered like a spectrum: Bauhaus, Plakat, Partikler, Tidende, Ebru.
 const PR_RAYS = ['#E8452C', '#C9F27A', '#7CF0C2', '#4FA3B5', '#6C7BE0'].map(hex);
 const PR_EDGES = [[PR_A, PR_B], [PR_B, PR_C], [PR_C, PR_A]];
 function prism(i, r, out, col) {
   const u = r();
   if (u < 0.2) {
-    // kanter: forside, bagside og de tre dybdekanter
+    // edges: front, back and the three depth edges
     if (r() < 0.72) {
       const [p, q] = PR_EDGES[Math.floor(r() * 3)], [x, y] = lerp2(p, q, r());
       out[0] = x + gauss(r) * 0.012; out[1] = y + gauss(r) * 0.012; out[2] = r() < 0.5 ? PR_D : -PR_D;
@@ -233,7 +233,7 @@ function prism(i, r, out, col) {
     }
     col.push(...mixc(PAL.blueL, PAL.ice, r() * 0.6));
   } else if (u < 0.31) {
-    // glassets flader, svagt
+    // the glass faces, faint
     if (r() < 0.5) {
       const [x, y] = samplePoly(r, [PR_A, PR_B, PR_C]);
       out[0] = x; out[1] = y; out[2] = r() < 0.5 ? PR_D : -PR_D;
@@ -243,17 +243,17 @@ function prism(i, r, out, col) {
     }
     col.push(...mixc(PAL.deep, PAL.blueM, r() * 0.5));
   } else if (u < 0.45) {
-    // den hvide stråle ind
+    // the incoming white beam
     const [x, y] = lerp2(PR_SRC, PR_IN, r());
     out[0] = x; out[1] = y + gauss(r) * 0.035; out[2] = gauss(r) * 0.035;
     col.push(...mixc(PAL.ice, PAL.gold, r() * 0.25));
   } else if (u < 0.49) {
-    // brydningen gennem glasset
+    // refraction through the glass
     const t = r(), [x, y] = lerp2(PR_IN, PR_OUT, t), w = 0.03 + t * 0.12;
     out[0] = x; out[1] = y + gauss(r) * w; out[2] = gauss(r) * 0.05;
     col.push(...PAL.ice);
   } else if (u < 0.86) {
-    // fem farvede stråler, der vifter ud og bliver bredere
+    // five colored beams fanning out and widening
     const k = Math.floor(r() * 5), t = Math.pow(r(), 0.85);
     const ang = (-4 - k * 9.5) * Math.PI / 180, len = 2.6;
     const dx = Math.cos(ang), dy = Math.sin(ang), w = 0.025 + t * 0.09;
@@ -263,7 +263,7 @@ function prism(i, r, out, col) {
     out[2] = gauss(r) * (0.03 + t * 0.1);
     col.push(...mixc(PAL.ice, PR_RAYS[k], Math.min(1, 0.35 + t * 6)).map((c) => c * (0.8 - t * 0.25)));
   } else {
-    // gnister for enden af strålerne
+    // sparks at the ends of the beams
     const k = Math.floor(r() * 5), ang = (-4 - k * 9.5) * Math.PI / 180, d = 2.6 + r() * 0.9;
     out[0] = PR_OUT[0] + Math.cos(ang) * d + gauss(r) * 0.12;
     out[1] = PR_OUT[1] + Math.sin(ang) * d + gauss(r) * 0.12;
@@ -273,7 +273,7 @@ function prism(i, r, out, col) {
   out[0] += PR_SHIFT;
 }
 
-// 6 · @: samples fra et canvas med tegnet. Kontakt.
+// 6 · @: sampled from a canvas with the glyph drawn. Contact.
 let atPts = null;
 function atSamples() {
   if (atPts) return atPts;
@@ -300,8 +300,8 @@ function at(i, r, out, col) {
 export const SHAPES = [nebula, star, helix, ghStar, knot, prism, at];
 export const CV_INDEX = 2;
 
-// Bygger positions- og farvedata for alle former.
-// layout[i] = { x, y, s } (forskydning og skala per form), rnd = delt tilfældighed per partikel.
+// Builds position and color data for all shapes.
+// layout[i] = { x, y, s } (offset and scale per shape), rnd = shared per-particle randomness.
 export function buildShapes(count, layout, rnd) {
   return SHAPES.map((fn, si) => {
     const r = rng(1000 + si * 7919);

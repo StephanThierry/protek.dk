@@ -1,11 +1,11 @@
-// Den levende forside.
-// Artiklen sættes linje for linje med Pretext (ingen DOM-målinger) i 1–3 spalter. Hvert linjebånd får
-// sine ledige "slots" ved at trække forhindringerne fra spaltebredden: portrættet er en cirkel, og
-// stjernen er sin egen alfa-maske, så teksten løber ind mellem takkerne. Alt sættes om hver frame.
+// The living front page.
+// The article is set line by line with Pretext (no DOM measuring) in 1-3 columns. Each line band gets
+// its free "slots" by subtracting the obstacles from the column width: the portrait is a circle, and
+// the star is its own alpha mask, so text runs in between its points. Everything is reset every frame.
 import { prepareWithSegments, layoutNextLine, layout, measureNaturalWidth, prepare, clearCache } from '@chenglou/pretext';
 
 const FAMILY = '"Newsreader"';
-const MASK = 220; // opløsning på stjernens alfa-maske
+const MASK = 220; // resolution of the star alpha mask
 
 export async function liveStory(story, { reduced, onPerf } = {}) {
   const flow = story.querySelector('[data-flow]');
@@ -15,7 +15,7 @@ export async function liveStory(story, { reduced, onPerf } = {}) {
   paras[0] = paras[0].slice(1);
   capEl.textContent = capLetter;
 
-  // ------------------------------------------------------------ forhindringer
+  // ------------------------------------------------------------ obstacles
   const portraitEl = flow.querySelector('[data-ob="portrait"]');
   const starEl = flow.querySelector('[data-ob="star"]');
   const starImg = starEl.querySelector('img');
@@ -30,7 +30,7 @@ export async function liveStory(story, { reduced, onPerf } = {}) {
   };
   let placed = false;
 
-  // ------------------------------------------------------------ mål og typografi
+  // ------------------------------------------------------------ measurements and typography
   let m = null;
   let H = 0;
   const prepCache = new Map();
@@ -55,7 +55,7 @@ export async function liveStory(story, { reduced, onPerf } = {}) {
     flow.style.setProperty('--lh', m.lh + 'px');
     flow.style.setProperty('--colw', (m.cols > 1 ? m.colW : 99999) + 'px');
     flow.style.setProperty('--gap', m.gap + 'px');
-    // Initialen fylder tre linjer.
+    // The drop cap spans three lines.
     const capSize = Math.round(m.lh * 3.15);
     const capW = measureNaturalWidth(prepare(capLetter, `800 ${capSize}px ${FAMILY}`));
     capBox = { w: Math.ceil(capW) + 10, h: m.lh * 3 };
@@ -73,7 +73,7 @@ export async function liveStory(story, { reduced, onPerf } = {}) {
     drawHalftone(portraitEl.querySelector('canvas'), portraitImg, obs.portrait.D);
   }
 
-  // Startgæt på spaltehøjden ud fra tekstmængden og forhindringernes areal; vokser hvis teksten ikke kan være der.
+  // Initial column height guess from text amount and obstacle area; grows if the text does not fit.
   function estimateHeight() {
     let total = 0;
     for (const p of prepared) total += layout(p, m.colW, m.lh).height;
@@ -85,7 +85,7 @@ export async function liveStory(story, { reduced, onPerf } = {}) {
 
   function place() {
     if (!placed) {
-      // Første placering: portrættet over spalteskel 1|2, stjernen over 2|3 længere nede.
+      // Initial placement: portrait over column gap 1|2, star over 2|3 further down.
       const one = m.cols === 1;
       obs.portrait.fx = one ? 0.7 : m.cols === 2 ? 0.5 : 0.345;
       obs.portrait.fy = one ? 0.16 : 0.3;
@@ -96,7 +96,7 @@ export async function liveStory(story, { reduced, onPerf } = {}) {
     for (const o of Object.values(obs)) { o.x = o.fx * m.W; o.y = o.fy * H; }
   }
 
-  // ------------------------------------------------------------ intervaller
+  // ------------------------------------------------------------ intervals
   function circleBlock(o, y0, y1, out) {
     const r = o.D / 2 + 16;
     const cx = o.x + o.ox, cy = o.y + o.oy;
@@ -143,7 +143,7 @@ export async function liveStory(story, { reduced, onPerf } = {}) {
     return res.filter(([a, b]) => b - a >= m.minSlot);
   }
 
-  // ------------------------------------------------------------ sats
+  // ------------------------------------------------------------ typesetting
   const pool = [];
   let used = 0;
 
@@ -171,7 +171,7 @@ export async function liveStory(story, { reduced, onPerf } = {}) {
         circleBlock(obs.portrait, y, y + lh, blocks);
         maskBlock(obs.star, y, y + lh, blocks);
         let free = slots(x0, x1, blocks);
-        // I smalle spalter giver to halve linjer på hver side af en forhindring dårlig læsning: brug kun den bredeste.
+        // In narrow columns, two half lines on each side of an obstacle read badly: use only the widest.
         if (free.length > 1 && colW < 520) free = [free.reduce((p, q) => (q[1] - q[0] > p[1] - p[0] ? q : p))];
         for (const [a, b] of free) {
           const ind = paraStart && pi > 0 ? indent : 0;
@@ -179,7 +179,7 @@ export async function liveStory(story, { reduced, onPerf } = {}) {
           const p = prepared[pi];
           const line = layoutNextLine(p, w, cursor);
           if (!line) { pi++; cursor = undefined; paraStart = true; if (pi >= prepared.length) break outer; continue; }
-          // Et ord, der ikke kan være i et smalt slot, må ikke knækkes midt over: spring slottet over.
+          // A word that does not fit a narrow slot must not be split: skip the slot.
           if (line.end.graphemeIndex > 0 && b - a < colW - 1) continue;
           const last = line.end.segmentIndex >= p.segments.length;
           const text = line.text.replace(/\s+$/, '');
@@ -204,7 +204,7 @@ export async function liveStory(story, { reduced, onPerf } = {}) {
     }
     for (let i = n; i < used; i++) pool[i].hidden = true;
     used = n;
-    return pi >= prepared.length; // false = teksten kunne ikke være der
+    return pi >= prepared.length; // false = the text did not fit
   }
 
   function setH(h) {
@@ -219,7 +219,7 @@ export async function liveStory(story, { reduced, onPerf } = {}) {
     flow.style.height = H + 'px';
   }
 
-  // Balancér spalterne: skru højden ned, til teksten lige netop kan være der, plus lidt luft til at forhindringerne kan vandre.
+  // Balance the columns: lower the height until the text just fits, plus some slack for the obstacles to wander.
   function balance() {
     while (H > m.lh * 8) {
       setH(H - m.lh);
@@ -246,7 +246,7 @@ export async function liveStory(story, { reduced, onPerf } = {}) {
     }
   }
 
-  // ------------------------------------------------------------ træk
+  // ------------------------------------------------------------ drag
   let drag = null;
   for (const [key, o] of Object.entries(obs)) {
     o.el.addEventListener('pointerdown', (e) => {
@@ -271,7 +271,7 @@ export async function liveStory(story, { reduced, onPerf } = {}) {
     o.el.addEventListener('pointercancel', end);
   }
 
-  // ------------------------------------------------------------ løkken
+  // ------------------------------------------------------------ loop
   let dirty = true, raf = 0, visible = true, t0 = performance.now(), perfAcc = 0, perfN = 0, perfT = 0;
   const drift = !reduced;
 
@@ -279,7 +279,7 @@ export async function liveStory(story, { reduced, onPerf } = {}) {
     raf = 0;
     const t = (now - t0) / 1000;
     if (drift) {
-      // Langsom vandring, så avisen lever, også uden at nogen rører den.
+      // Slow drift so the paper feels alive even when nobody touches it.
       const A = m.cols === 1 ? 10 : 22;
       if (drag?.o !== obs.portrait) { obs.portrait.ox = Math.sin(t * 0.31) * A; obs.portrait.oy = Math.cos(t * 0.23) * A * 0.8; }
       if (drag?.o !== obs.star) { obs.star.ox = Math.cos(t * 0.19 + 1) * A; obs.star.oy = Math.sin(t * 0.27 + 2) * A; }
@@ -314,7 +314,7 @@ export async function liveStory(story, { reduced, onPerf } = {}) {
     wake();
   }).observe(flow);
 
-  // Webfonte, der lander sent, giver andre bredder: mål forfra.
+  // Late-loading web fonts change widths: re-measure.
   document.fonts.addEventListener?.('loadingdone', () => { clearCache(); prepCache.clear(); relayout(); wake(); });
 
   relayout();
@@ -322,7 +322,7 @@ export async function liveStory(story, { reduced, onPerf } = {}) {
   wake();
 }
 
-// Stjernens alfa-maske: hvilke pixels er "blæk".
+// Star alpha mask: which pixels are "ink".
 function buildMask(img) {
   const c = document.createElement('canvas');
   c.width = c.height = MASK;
@@ -334,7 +334,7 @@ function buildMask(img) {
   return a;
 }
 
-// Rastreret avisfoto: prikstørrelse efter lysstyrke, forskudt hver anden række.
+// Halftone newspaper photo: dot size by brightness, every other row offset.
 function drawHalftone(canvas, img, D) {
   const dpr = Math.min(devicePixelRatio || 1, 2);
   canvas.width = canvas.height = Math.round(D * dpr);

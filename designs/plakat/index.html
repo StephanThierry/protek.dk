@@ -25,7 +25,7 @@
 
 <main id="top">
 
-  <!-- 1 · Genkendelse: pin med lagdelt typografi (hero) -->
+  <!-- 1 · Recognition: pin with layered typography (hero) -->
   <section data-next-label="Top" data-sc-act="pin" data-sc-span="1.8" data-sc-drift="#0A0E10">
     <div data-sc-stage class="hero">
       <p class="hero__ghost" aria-hidden="true" data-sc-parallax="-1.1">PROTEK</p>
@@ -38,7 +38,7 @@
     </div>
   </section>
 
-  <!-- 2 · Mærket: pin. Stjernen springer ud spids for spids, mens scroll driver den. -->
+  <!-- 2 · The mark: pin. The star bursts out point by point as scroll drives it. -->
   <section id="maerket" data-next-label="Oprindelse" data-sc-act="pin" data-sc-span="3" data-sc-drift="#0B1417">
     <div data-sc-stage class="mark">
       <svg class="mark__star" viewBox="0 0 1000 1000" role="img" aria-label="Proteks stjerne" focusable="false">
@@ -67,7 +67,7 @@
     </div>
   </section>
 
-  <!-- 3 · PEAK: pan. Et årstal tikker op, mens sporet glider sidelæns. -->
+  <!-- 3 · PEAK: pan. A year ticks up while the track slides sideways. -->
   <section id="cv" data-next-label="CV" data-sc-act="pan" data-sc-span="6.2" data-sc-drift="#0A1113">
     <div data-sc-stage class="cv">
       <p class="cv__year" aria-hidden="true"><span data-year-out>1994</span></p>
@@ -213,7 +213,7 @@
     </div>
   </section>
 
-  <!-- 3b · Substans: pin med tæller. Stjernerne tikker op med scroll. -->
+  <!-- 3b · Substance: pin with counter. The stars tick up with scroll. -->
   <section id="github" data-next-label="GitHub" data-sc-act="pin" data-sc-span="2.4" data-sc-drift="#0C1316">
     <div data-sc-stage class="gh">
       <div class="gh__stat">
@@ -239,7 +239,7 @@
     </div>
   </section>
 
-  <!-- 4 · Varme: flow + reveal, kort og redaktionelt -->
+  <!-- 4 · Warmth: flow + reveal, short and editorial -->
   <section class="sc-section poi" id="poi" data-next-label="Points of Interest" data-sc-act="flow" data-sc-drift="#0B1012">
     <div class="sc-wrap poi__grid">
       <figure class="poi__fig" data-sc-reveal="left" data-sc-reveal-at="0.04 0.34">
@@ -271,7 +271,7 @@
     </div>
   </section>
 
-  <!-- 5 · Beslutning: pin + pointer. Sidste element på siden. -->
+  <!-- 5 · Decision: pin + pointer. Last element on the page. -->
   <section id="kontakt" data-next-label="Kontakt" data-sc-act="pin" data-sc-span="1.15" data-sc-drift="#0A0E10">
     <div data-sc-stage class="close" data-sc-spotlight>
       <div class="close__inner">
@@ -298,13 +298,13 @@
 
 <script src="js/scrollcraft.js?v=f7d603e85c"></script>
 <script>
-  /* Antal års erfaring regnes ud fra startåret, så det følger kalenderen af sig selv. */
+  /* Years of experience are computed from the start year, so it follows the calendar by itself. */
   [].forEach.call(document.querySelectorAll("[data-years-since]"), function (el) {
     var n = new Date().getFullYear() - parseInt(el.getAttribute("data-years-since"), 10);
     if (n > 0) el.textContent = n;
   });
 
-  /* GitHub-tal: cache først (ingen ventetid), friske tal hentes i baggrunden når cachen er over 6 timer gammel. */
+  /* GitHub stats: cache first (no wait), fresh numbers fetched in the background when the cache is over 6 hours old. */
   (function () {
     var USER = "StephanThierry", KEY = "protek.gh", TTL = 6 * 3600 * 1000;
     var stars = document.querySelector("[data-sc-count]"), repos = document.querySelector("[data-gh-repos]");
@@ -318,7 +318,7 @@
     fetch("https://api.github.com/users/" + USER + "/repos?per_page=100&type=owner")
       .then(function (r) { if (!r.ok) throw 0; return r.json(); })
       .then(function (list) {
-        list = list.filter(function (r) { return !r.fork; }); /* kun egne repos, ikke forks */
+        list = list.filter(function (r) { return !r.fork; }); /* own repos only, no forks */
         var sum = 0; list.forEach(function (r) { sum += r.stargazers_count || 0; });
         if (!list.length || !sum) return;
         try { localStorage.setItem(KEY, JSON.stringify({ t: Date.now(), stars: sum, repos: list.length })); } catch (e) {}
@@ -326,7 +326,7 @@
       .catch(function () {});
   })();
 
-  /* Mobil: ingen visk-afsløring. Portrættet er synligt fra start og toner ud, når det forlader skærmen (se .poi__fig i CSS). */
+  /* Mobile: no wipe reveal. The portrait is visible from the start and fades out as it leaves the screen (see .poi__fig in CSS). */
   if (matchMedia("(max-width: 860px)").matches) {
     var fig = document.querySelector(".poi__fig");
     if (fig) { fig.removeAttribute("data-sc-reveal"); fig.removeAttribute("data-sc-reveal-at"); }
@@ -334,7 +334,7 @@
 
   ScrollCraft.mount(document.body);
 
-  /* Pil nederst til højre: glider blødt til næste sektion og forsvinder i bunden. */
+  /* Bottom-right arrow: smooth-scrolls to the next section and disappears at the bottom. */
   (function () {
     var btn = document.querySelector(".next");
     var secs = [].slice.call(document.querySelectorAll("main > section"));
@@ -359,12 +359,12 @@
     btn.addEventListener("click", function () {
       var n = secs[Math.min(current() + 1, secs.length - 1)];
       var top = n.getBoundingClientRect().top + scrollY;
-      /* Sektion med visk-afslørelse (data-sc-reveal): stop først, når afslørelsen er færdig, så billedet står helt frem. */
+      /* Section with wipe reveal (data-sc-reveal): stop only once the reveal is done, so the image is fully shown. */
       var rv = n.querySelector("[data-sc-reveal]");
       if (rv && n.getAttribute("data-sc-act") === "flow") {
         var to = parseFloat((rv.getAttribute("data-sc-reveal-at") || "0 0.55").split(/\s+/)[1]) || 0.55;
         var y = top + (to + 0.05) * (n.offsetHeight + innerHeight) - innerHeight;
-        var figBottom = rv.getBoundingClientRect().bottom + scrollY + 24 - innerHeight; /* hele billedet inden for skærmen */
+        var figBottom = rv.getBoundingClientRect().bottom + scrollY + 24 - innerHeight; /* whole image within the screen */
         top = Math.max(top, Math.min(Math.max(y, figBottom), top + n.offsetHeight - innerHeight * 0.5));
       }
       scrollTo({ top: top, behavior: "smooth" });
@@ -374,7 +374,7 @@
     update();
   })();
 
-  /* Signaturen: årstallet i hjørnet følger det kort, der står midt i sporet. */
+  /* Signature: the year in the corner follows the card in the middle of the track. */
   (function () {
     var out = document.querySelector("[data-year-out]");
     var items = [].slice.call(document.querySelectorAll(".rail [data-year]"));
@@ -389,7 +389,7 @@
         var d = Math.abs(r.left + r.width / 2 - mid);
         if (d < bd) { bd = d; best = items[i]; }
       }
-      /* Sporet stopper, før det sidste kort når midten. Helt til sidst i sporet er det sidste kort det aktuelle. */
+      /* The track stops before the last card reaches the middle. At the very end of the track the last card is current. */
       var cv = document.getElementById("cv");
       if (cv && parseFloat(cv.style.getPropertyValue("--sc-p")) >= 0.985) best = items[items.length - 1];
       if (best) {

@@ -8,20 +8,20 @@ const coarse = matchMedia('(pointer: coarse)').matches;
 const rand = (a, b) => a + Math.random() * (b - a);
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// --------------------------------------------------------- tekst og tal
+// --------------------------------------------------------- text and numbers
 $$('[data-years-since]').forEach((el) => {
   const n = new Date().getFullYear() - parseInt(el.dataset.yearsSince, 10);
   if (n > 0) el.textContent = n;
 });
 if (coarse) $('[data-hint-text]').textContent = 'Stryg over skærmen for at røre i vandet. Tryk for at dryppe blæk.';
 
-// --------------------------------------------------------- blækket
+// --------------------------------------------------------- ink
 const HEX = { indigo: 0x2b3a8c, vermilion: 0xd2462a, ochre: 0xd9a21b, teal: 0x1e7f78, rose: 0xb8325e, sumi: 0x1a1a22 };
 const INK = Object.fromEntries(Object.entries(HEX).map(([k, v]) => [k, absorbance(v)]));
 const inkOf = (name, s = 1) => INK[name || 'indigo'].clone().multiplyScalar(s);
 let current = 'indigo';
 
-// --------------------------------------------------------- vandet
+// --------------------------------------------------------- water
 const canvas = $('#tray');
 let fluid = null;
 
@@ -30,7 +30,7 @@ async function boot(retry = false) {
   try {
     fluid = await createFluid(canvas, { forceWebGL: new URLSearchParams(location.search).has('webgl') });
   } catch (e) {
-    console.warn('Ebru: ingen GPU-simulering', e);
+    console.warn('Ebru: no GPU simulation', e);
     fluid = null;
     return;
   }
@@ -56,7 +56,7 @@ function writeName() {
   );
 }
 
-// et par dråber rundt om navnet, så vandet lever fra start; navnet selv får lov at stå, til nogen rører i det
+// a few drops around the name so the water is alive from the start; the name stays until someone stirs it
 async function welcome() {
   await wait(700);
   const spots = [[0.12, 0.2, 'ochre'], [0.88, 0.24, 'teal'], [0.16, 0.78, 'rose'], [0.92, 0.56, 'ochre'], [0.5, 0.86, 'teal']];
@@ -67,7 +67,7 @@ async function welcome() {
   }
 }
 
-// --------------------------------------------------------- røre i vandet
+// --------------------------------------------------------- stirring the water
 const toUV = (x, y) => [x / canvas.clientWidth, y / canvas.clientHeight];
 const interactive = (t) => t.closest && t.closest('a, button, .tools, .bar, input, label');
 let last = null, down = false, moved = 0, hinted = false;
@@ -102,7 +102,7 @@ addEventListener('pointerup', (e) => {
 });
 addEventListener('pointerleave', () => { last = null; down = false; });
 
-// berøring: et stryg rører, også når siden scroller; et tryk drypper
+// touch: a swipe stirs, even while the page scrolls; a tap drips
 let touchLast = null;
 addEventListener('touchstart', (e) => { const t = e.touches[0]; touchLast = toUV(t.clientX, t.clientY); }, { passive: true });
 addEventListener('touchmove', (e) => {
@@ -116,22 +116,22 @@ addEventListener('touchmove', (e) => {
 
 function dropAt(x, y, name, big = 1) {
   if (!fluid) return;
-  // en ebru-dråbe: farven i midten og en tynd mørkere kant, som når pigmentet skubber vandet væk
+  // an ebru drop: colour in the middle and a thin darker rim, as when the pigment pushes the water away
   const r = rand(0.035, 0.055) * big;
   fluid.drop(x, y, inkOf(name, 1.15), r);
   fluid.ring(x, y, inkOf(name, 0.9), r * 1.15, r * 0.22);
 }
 
-// --------------------------------------------------------- scroll trækker vandet med
+// --------------------------------------------------------- scroll drags the water along
 let lastY = scrollY;
 addEventListener('scroll', () => {
   const d = scrollY - lastY; lastY = scrollY;
   if (fluid && !reduced) fluid.drift(0, -Math.max(-60, Math.min(60, d)) * 7);
 }, { passive: true });
 
-// --------------------------------------------------------- scener pr. sektion
+// --------------------------------------------------------- scenes per section
 const scenes = {
-  // battal: vandet drysses med farver, og en kam trækkes frem og tilbage (gel-git)
+  // battal: the water is sprinkled with colours and a comb is dragged back and forth (gel-git)
   async origin() {
     for (let i = 0; i < 16; i++) {
       dropAt(rand(0.05, 0.95), rand(0.12, 0.92), ['ochre', 'vermilion', 'indigo', 'teal'][i % 4], 0.85);
@@ -140,14 +140,14 @@ const scenes = {
     await wait(600);
     fluid?.comb({ freq: 7, axis: 0, alt: true, amp: 1.6, ms: 1500 });
   },
-  // taraklı: fire farver side om side og en lodret kam gennem dem
+  // taraklı: four colours side by side and a vertical comb through them
   async github() {
     const inks = ['indigo', 'teal', 'vermilion', 'ochre'];
     for (let i = 0; i < 8; i++) { dropAt(0.1 + (i % 4) * 0.27, i < 4 ? 0.3 : 0.7, inks[i % 4], 1.4); await wait(90); }
     await wait(500);
     fluid?.comb({ freq: 11, axis: 1, alt: false, amp: 1.5, ms: 1600 });
   },
-  // bülbül yuvası (nattergalereden): små hvirvler snurrer farverne til spiraler
+  // bülbül yuvası (nightingale's nest): small swirls spin the colours into spirals
   async poi() {
     const pts = [[0.2, 0.35], [0.5, 0.65], [0.8, 0.38]];
     pts.forEach(([x, y], i) => { dropAt(x, y, ['vermilion', 'sumi', 'rose'][i], 1.3); fluid?.ring(x, y, inkOf('ochre', 0.9), 0.085, 0.01); });
@@ -157,17 +157,17 @@ const scenes = {
       await wait(30);
     }
   },
-  // tulipan: ringe i ringe, og så trækkes en nål op gennem midten
+  // tulip: rings within rings, then a needle is drawn up through the middle
   async contact() {
     const wide = innerWidth > 860;
-    // på mobil står tulipanen over teksten; afstande i y skaleres, så formen ikke strækkes på højkant
+    // on mobile the tulip sits above the text; y distances are scaled so the shape is not stretched in portrait
     const x = wide ? 0.74 : 0.5, y = wide ? 0.62 : 0.3, s = Math.min(1, innerWidth / innerHeight);
     const layers = [['rose', 0.11], ['ochre', 0.075], ['vermilion', 0.05], ['sumi', 0.022]];
     for (const [c, r] of layers) { fluid?.drop(x, y, inkOf(c, 1.2), r); await wait(160); }
     await wait(400);
     for (let k = 0; k < 18; k++) { fluid?.force(x, y + (0.04 - k * 0.012) * s, 0, -120, 0.018); await wait(24); }
     await wait(250);
-    // to blade
+    // two leaves
     const lx = wide ? 0.08 : 0.13, ly = 0.16 * s;
     fluid?.drop(x - lx, y + ly, inkOf('teal', 1.2), 0.03);
     fluid?.drop(x + lx, y + ly, inkOf('teal', 1.2), 0.03);
@@ -191,7 +191,7 @@ const sceneIO = new IntersectionObserver((entries) => {
 }, { threshold: 0.35 });
 $$('[data-scene]').forEach((s) => sceneIO.observe(s));
 
-// menuen markerer den sektion, der krydser skærmens midte (CV'et er for højt til en tærskel)
+// the menu highlights the section crossing the middle of the screen (the CV is too tall for a threshold)
 const navIO = new IntersectionObserver((entries) => {
   for (const en of entries) {
     if (!en.isIntersecting) continue;
@@ -200,7 +200,7 @@ const navIO = new IntersectionObserver((entries) => {
 }, { rootMargin: '-50% 0px -50% 0px' });
 $$('[data-scene]').forEach((s) => navIO.observe(s));
 
-// CV: hver arbejdsplads drypper sin farve, når kortet når midten af skærmen
+// CV: each workplace drips its colour when its card reaches the middle of the screen
 const yearOut = $('[data-year-out]');
 const jobIO = new IntersectionObserver((entries) => {
   for (const en of entries) {
@@ -218,11 +218,11 @@ const jobIO = new IntersectionObserver((entries) => {
   }
 }, { rootMargin: '-35% 0px -35% 0px' });
 $$('.job').forEach((j) => jobIO.observe(j));
-// kortene skal også være synlige uden at have nået midten (fx sidste kort på en høj skærm)
+// cards must also become visible without reaching the middle (e.g. the last card on a tall screen)
 const showIO = new IntersectionObserver((entries) => entries.forEach((en) => en.isIntersecting && en.target.classList.add('is-in')), { threshold: 0.15 });
 $$('.job').forEach((j) => showIO.observe(j));
 
-// --------------------------------------------------------- værktøjsbakken
+// --------------------------------------------------------- tool tray
 $$('.ink').forEach((b) => b.addEventListener('click', () => {
   current = b.dataset.ink;
   $$('.ink').forEach((o) => o.setAttribute('aria-checked', String(o === b)));
@@ -250,7 +250,7 @@ addEventListener('resize', () => {
   rT = setTimeout(() => { if (fluid && fluid.resize()) writeName(); }, 150);
 });
 
-// --------------------------------------------------------- GitHub-tal (cache i en time)
+// --------------------------------------------------------- GitHub stats (cached for an hour)
 (() => {
   const USER = 'StephanThierry', KEY = 'protek-gh';
   const starsEl = $('[data-gh-stars]'), reposEl = $('[data-gh-repos]');
@@ -258,7 +258,7 @@ addEventListener('resize', () => {
   try {
     const c = JSON.parse(localStorage.getItem(KEY) || 'null');
     if (c) { set(c.stars, c.repos); if (Date.now() - c.t < 3600e3) return; }
-  } catch (e) { /* ignorer */ }
+  } catch (e) { /* ignore */ }
   fetch(`https://api.github.com/users/${USER}/repos?per_page=100&type=owner`)
     .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
     .then((list) => {
@@ -266,7 +266,7 @@ addEventListener('resize', () => {
       const sum = list.reduce((a, r) => a + (r.stargazers_count || 0), 0);
       if (!list.length || !sum) return;
       set(sum, list.length);
-      try { localStorage.setItem(KEY, JSON.stringify({ t: Date.now(), stars: sum, repos: list.length })); } catch (e) { /* ignorer */ }
+      try { localStorage.setItem(KEY, JSON.stringify({ t: Date.now(), stars: sum, repos: list.length })); } catch (e) { /* ignore */ }
     })
     .catch(() => {});
 })();

@@ -1,30 +1,30 @@
 # protek.dk
 
-Stephan Thierrys personlige side. Forsiden er partikeldesignet; de andre designs ligger som en showcase under `/designs/`.
+Stephan Thierry's personal site. The front page is the particle design; the other designs live in a showcase under `/designs/`. All text on the site is Danish; code, comments and docs are English.
 
-## Struktur
+## Structure
 
-| Mappe | URL | Hvad |
+| Folder | URL | What |
 | --- | --- | --- |
-| `site/` | `/` | Partikler. Three.js GPGPU, GSAP, Lenis (Vite). Har sektionen *Designs* med showcasen. |
-| `designs/legacy/` | `/designs/legacy/` | Startpunktet: det klassiske Bootstrap-site, bygget i hånden på én dag. Statisk. |
-| `designs/plakat/` | `/designs/plakat/` | Typografisk plakat på [scroll-craft](https://github.com/nateherkai/scroll-craft) (MIT). Statisk. |
-| `designs/bauhaus/` | `/designs/bauhaus/` | Bauhaus-legeplads med Matter.js-fysik (Vite). |
-| `designs/tidende/` | `/designs/tidende/` | Protek Tidende, avisforside sat live med Pretext (Vite). |
-| `designs/ebru/` | `/designs/ebru/` | Ebru, marmorering på vand: WebGPU/TSL stable fluids (Vite). |
-| `react/` | `/react/` | ReactJS-præsentationen fra Ditmer Academy 2016. Deployes ikke herfra. |
+| `site/` | `/` | Particles. Three.js GPGPU, GSAP, Lenis (Vite). Contains the *Designs* section with the showcase. |
+| `designs/legacy/` | `/designs/legacy/` | The starting point: the classic Bootstrap site, built by hand in one day. Static. |
+| `designs/plakat/` | `/designs/plakat/` | Typographic poster built on [scroll-craft](https://github.com/nateherkai/scroll-craft) (MIT). Static. |
+| `designs/bauhaus/` | `/designs/bauhaus/` | Bauhaus playground with Matter.js physics (Vite). |
+| `designs/tidende/` | `/designs/tidende/` | Protek Tidende, a newspaper front page typeset live with Pretext (Vite). |
+| `designs/ebru/` | `/designs/ebru/` | Ebru, marbling on water: WebGPU/TSL stable fluids (Vite). |
+| `react/` | `/react/` | The ReactJS presentation from Ditmer Academy 2016. Not deployed from here. |
 
-De fem AI-designs er lavet med AI på 2 timer til sammen; legacy-sitet tog en hel dag i hånden.
+The five AI designs were made with AI in 2 hours combined; the legacy site took a full day by hand.
 
-## Byg og publicer
+## Build and deploy
 
 ```powershell
-powershell -NoProfile -File build.ps1    # samler hele sitet i .\dist
-powershell -NoProfile -File deploy.ps1   # bygger og publicerer (maal i deploy.config.psd1)
+powershell -NoProfile -File build.ps1    # assembles the whole site in .\dist
+powershell -NoProfile -File deploy.ps1   # builds and publishes (target in deploy.config.psd1)
 ```
 
-Deploy-målet ligger i `deploy.config.psd1`, som ikke er i git. Kopier `deploy.config.example.psd1` til `deploy.config.psd1` og ret `Destination` (webmappen på serveren) og `PublicUrl`.
+The deploy target lives in `deploy.config.psd1`, which is not in git. Copy `deploy.config.example.psd1` to `deploy.config.psd1` and set `Destination` (the web folder on the server) and `PublicUrl`.
 
-Alle Vite-projekter bruger `base: './'`, så de virker i enhver undermappe. Lokal udvikling: `npm run dev` i den enkelte mappe.
+All Vite projects use `base: './'`, so they work in any subfolder. Local development: `npm run dev` in the individual folder.
 
-Skærmbillederne i showcasen ligger i `site/public/img/designs/` (1440×900, webp).
+The showcase screenshots live in `site/public/img/designs/` (1440×900, webp).

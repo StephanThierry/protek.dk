@@ -3,7 +3,7 @@ import { liveStory } from './flow.js';
 
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-// Antal års erfaring og dagens dato følger kalenderen.
+// Years of experience and today's date follow the calendar.
 document.querySelectorAll('[data-years-since]').forEach((el) => {
   const n = new Date().getFullYear() - parseInt(el.dataset.yearsSince, 10);
   if (n > 0) el.textContent = n;
@@ -14,7 +14,7 @@ document.querySelectorAll('[data-today]').forEach((el) => {
   el.dateTime = new Date().toISOString().slice(0, 10);
 });
 
-// --------------------------------------------------------- den levende forside
+// --------------------------------------------------------- the living front page
 const perfEl = document.querySelector('[data-perf]');
 const fmt = new Intl.NumberFormat('da-DK', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 (async () => {
@@ -30,11 +30,11 @@ const fmt = new Intl.NumberFormat('da-DK', { minimumFractionDigits: 1, maximumFr
       onPerf: (ms) => { perfEl.textContent = ` · ${fmt.format(Math.max(ms, 0.1))} ms pr. sats`; },
     });
   } catch (e) {
-    console.warn('Levende sats slået fra, viser almindelig tekst:', e);
+    console.warn('Live typesetting disabled, showing plain text:', e);
   }
 })();
 
-// --------------------------------------------------------- Børsen: GitHub-tal og kursbånd
+// --------------------------------------------------------- Stock exchange: GitHub numbers and ticker
 const starsEl = document.querySelector('[data-gh-stars]');
 const reposEl = document.querySelector('[data-gh-repos]');
 const tickerEl = document.querySelector('[data-ticker]');
@@ -63,7 +63,7 @@ function countTo(el, to) {
 (function githubStats() {
   const USER = 'StephanThierry', KEY = 'protek.gh', TTL = 6 * 3600 * 1000;
   let cache = null;
-  try { cache = JSON.parse(localStorage.getItem(KEY)); } catch (e) { /* privat vindue */ }
+  try { cache = JSON.parse(localStorage.getItem(KEY)); } catch (e) { /* private window */ }
   const set = (stars, repos) => { countTo(starsEl, stars); reposEl.textContent = repos; ticker(stars, repos); };
   set(cache?.stars > 0 ? cache.stars : 264, cache?.repos || 23);
   if (cache && Date.now() - cache.t < TTL) return;
@@ -74,12 +74,12 @@ function countTo(el, to) {
       const sum = list.reduce((a, r) => a + (r.stargazers_count || 0), 0);
       if (!list.length || !sum) return;
       set(sum, list.length);
-      try { localStorage.setItem(KEY, JSON.stringify({ t: Date.now(), stars: sum, repos: list.length })); } catch (e) { /* ignorer */ }
+      try { localStorage.setItem(KEY, JSON.stringify({ t: Date.now(), stars: sum, repos: list.length })); } catch (e) { /* ignore */ }
     })
     .catch(() => {});
 })();
 
-// --------------------------------------------------------- udklip glider ind
+// --------------------------------------------------------- clippings slide in
 if (!reduced && 'IntersectionObserver' in window) {
   document.documentElement.classList.add('reveal');
   const io = new IntersectionObserver((ents) => ents.forEach((en) => {
@@ -88,7 +88,7 @@ if (!reduced && 'IntersectionObserver' in window) {
   document.querySelectorAll('.clip, .feature, .ad, .strip, .market > *').forEach((el) => io.observe(el));
 }
 
-// --------------------------------------------------------- aktiv sektion i menuen
+// --------------------------------------------------------- active section in the menu
 const links = [...document.querySelectorAll('.sections a')];
 const secs = links.map((a) => document.querySelector(a.getAttribute('href')));
 const navIO = new IntersectionObserver((ents) => {

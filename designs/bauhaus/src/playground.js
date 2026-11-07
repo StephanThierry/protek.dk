@@ -2,9 +2,9 @@ import Matter from 'matter-js';
 
 const { Engine, Bodies, Body, Composite, Constraint, Events, Vector } = Matter;
 
-// Gør et DOM-element til et fysisk legeme. Elementet følger legemet hvert frame (translate + rotate).
-// Bogstaverne i navnet starter som statiske ("frosne") legemer på deres plads i overskriften
-// og vågner, når man griber dem, eller når noget rammer dem.
+// Turns a DOM element into a physics body. The element follows the body every frame (translate + rotate).
+// The name letters start as static ("frozen") bodies in their place in the heading
+// and wake up when grabbed or hit by something.
 
 const COLORS = { red: '#E2412B', blue: '#2348C4', yellow: '#F4B71E', ink: '#141210' };
 
@@ -20,7 +20,7 @@ export function playground(root, { reduced = false } = {}) {
   let walls = [];
   let W = 0, H = 0;
 
-  // --------------------------------------------------- bogstaver
+  // --------------------------------------------------- letters
   const chars = [];
   words.forEach((word) => {
     const text = word.textContent;
@@ -43,8 +43,8 @@ export function playground(root, { reduced = false } = {}) {
     });
   }
 
-  // Bogstaverne er absolut placeret i overskriften (for at beholde dens typografi), så deres
-  // koordinatsystem er forskudt i forhold til legepladsen med overskriftens position (ox, oy).
+  // The letters are absolutely positioned in the heading (to keep its typography), so their
+  // coordinate system is offset from the playground by the heading position (ox, oy).
   function placeEl(it) {
     const { x, y } = it.body.position;
     const ox = it.ox || 0, oy = it.oy || 0;
@@ -64,8 +64,8 @@ export function playground(root, { reduced = false } = {}) {
         friction: 0.5, frictionAir: 0.012, restitution: 0.2, density: 0.003,
         chamfer: { radius: Math.min(h.w, h.h) * 0.08 },
       });
-      // Oprettes dynamisk og fryses bagefter. Oprettes de statiske, gemmer Matter uendelig masse
-      // som "original", og så bliver positionen NaN, når de vækkes igen.
+      // Created dynamic and frozen afterwards. If created static, Matter stores infinite mass
+      // as "original", and the position becomes NaN when they wake up.
       Body.setStatic(body, true);
       el.style.position = 'absolute';
       el.style.left = '0'; el.style.top = '0';
@@ -87,7 +87,7 @@ export function playground(root, { reduced = false } = {}) {
     }
   }
 
-  // --------------------------------------------------- vægge
+  // --------------------------------------------------- walls
   function buildWalls() {
     Composite.remove(engine.world, walls);
     const t = 200;
@@ -100,7 +100,7 @@ export function playground(root, { reduced = false } = {}) {
     Composite.add(engine.world, walls);
   }
 
-  // --------------------------------------------------- former
+  // --------------------------------------------------- shapes
   function makeShape(kind, size, color, x, y) {
     let body, el;
     const opts = { friction: 0.3, frictionAir: 0.008, restitution: 0.45, density: 0.0015 };
@@ -174,7 +174,7 @@ export function playground(root, { reduced = false } = {}) {
       const it = makeShape(kind, size, color, x, y);
       Body.setAngle(it.body, Math.random() * Math.PI);
       if (!reduced && !wide) {
-        // Mobil: formerne dukker op under navnet med en lille opadgående puf, uden at vælte bogstaverne.
+        // Mobile: shapes pop up below the name with a small upward nudge, without toppling the letters.
         it.el.style.opacity = '0';
         setTimeout(() => {
           it.el.style.transition = 'opacity .4s'; it.el.style.opacity = '1';
@@ -186,7 +186,7 @@ export function playground(root, { reduced = false } = {}) {
     });
   }
 
-  // Noget, der rammer et frossent bogstav hårdt nok, vækker det.
+  // Anything hitting a frozen letter hard enough wakes it.
   Events.on(engine, 'collisionStart', (e) => {
     for (const p of e.pairs) {
       const a = p.bodyA, b = p.bodyB;
@@ -197,7 +197,7 @@ export function playground(root, { reduced = false } = {}) {
     }
   });
 
-  // --------------------------------------------------- træk og kast
+  // --------------------------------------------------- drag and throw
   let drag = null;
   root.addEventListener('pointerdown', (e) => {
     const el = e.target.closest('.ch, .shape');
@@ -226,7 +226,7 @@ export function playground(root, { reduced = false } = {}) {
   root.addEventListener('pointerup', end);
   root.addEventListener('pointercancel', end);
 
-  // Klik i et tomt område: en lille eksplosion.
+  // Click on empty space: a small explosion.
   root.addEventListener('click', (e) => {
     if (e.target.closest('.ch, .shape, a, button, .play__intro')) return;
     const p = local(e);
@@ -246,20 +246,20 @@ export function playground(root, { reduced = false } = {}) {
     return { x: e.clientX - r.left, y: e.clientY - r.top };
   }
 
-  // --------------------------------------------------- ryd op
+  // --------------------------------------------------- tidy up
   function reset() {
     for (const it of items) {
       if (!it.letter) continue;
       if (it.body.isStatic) continue;
       it.homing = true;
-      Body.setStatic(it.body, true); // flyttes manuelt hjem, så de ikke skubber
+      Body.setStatic(it.body, true); // moved home manually so they do not push
       it.from = { x: it.body.position.x, y: it.body.position.y, a: it.body.angle };
       it.t = 0;
     }
   }
   root.querySelector('[data-reset]')?.addEventListener('click', reset);
 
-  // --------------------------------------------------- løkke
+  // --------------------------------------------------- loop
   let running = false, last = 0, acc = 0;
   const STEP = 1000 / 60;
   function tick(now) {
@@ -284,7 +284,7 @@ export function playground(root, { reduced = false } = {}) {
 
   new IntersectionObserver(([en]) => (en.isIntersecting ? start() : stop())).observe(root);
 
-  // --------------------------------------------------- opstart og resize
+  // --------------------------------------------------- startup and resize
   function size() {
     W = root.clientWidth; H = root.clientHeight;
   }
@@ -302,7 +302,7 @@ export function playground(root, { reduced = false } = {}) {
       buildWalls();
       if (Math.abs(W - lastW) > 40) {
         lastW = W;
-        buildLetters(); // ny skriftstørrelse: bogstaverne måles og sættes på plads igen
+        buildLetters(); // new font size: re-measure and reposition the letters
         for (const it of items) if (!it.letter) {
           Body.setPosition(it.body, { x: Math.min(Math.max(it.body.position.x, 40), W - 40), y: Math.min(it.body.position.y, H - 60) });
           placeEl(it);
@@ -311,6 +311,6 @@ export function playground(root, { reduced = false } = {}) {
     }, 200);
   });
 
-  // Hint forsvinder efter første berøring
+  // Hint disappears after first touch
   root.addEventListener('pointerdown', () => hint?.classList.add('is-gone'), { once: true });
 }

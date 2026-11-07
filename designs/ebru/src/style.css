@@ -1,4 +1,4 @@
-﻿/* Ebru: CV'et ligger oven på et marmoreringskar. Papir, blæk og meget luft. */
+﻿/* Ebru: the CV sits on top of a marbling tray. Paper, ink and lots of air. */
 :root {
   --paper: #f2ece1;
   --paper-2: #e9e1d2;
@@ -35,7 +35,7 @@ b { font-weight: 600; }
 .small { color: var(--ink-2); }
 ::selection { background: var(--ochre); color: var(--ink); }
 
-/* ---------------------------------------------------------------- vandet */
+/* ---------------------------------------------------------------- water */
 #tray, .tray-fallback {
   position: fixed; inset: 0; width: 100vw; height: 100lvh; z-index: 0; display: block;
   touch-action: pan-y;
@@ -71,7 +71,7 @@ main, .bar, .tools { position: relative; z-index: 1; }
 .bar__nav a:hover, .bar__nav a[aria-current="true"] { background: var(--ink); color: var(--paper); }
 @media (max-width: 720px) { .bar__nav { display: none; } }
 
-/* ---------------------------------------------------------------- byggesten */
+/* ---------------------------------------------------------------- building blocks */
 .sec { position: relative; min-height: 100svh; padding: clamp(96px, 14vh, 160px) var(--gutter) clamp(64px, 10vh, 120px); }
 .kicker { font: 400 .78rem/1 var(--mono); text-transform: uppercase; letter-spacing: .14em; margin: 0 0 18px; color: var(--ink-2); display: flex; align-items: center; gap: 10px; }
 .kicker::before { content: ""; width: 26px; height: 1px; background: currentColor; }
@@ -80,7 +80,7 @@ main, .bar, .tools { position: relative; z-index: 1; }
   font-variation-settings: "opsz" 144, "SOFT" 100, "WONK" 1;
   letter-spacing: -.035em; margin: 0 0 28px; text-wrap: balance;
 }
-/* Tekst, der står direkte på vandet, får en blød papirkant, så den kan læses gennem blækket. */
+/* Text placed directly on the water gets a soft paper edge so it stays readable through the ink. */
 .big, .kicker, .hero__eyebrow, .hint, .cv__head .mono, .gh__num, .lede, .foot {
   text-shadow: 0 0 2px var(--paper), 0 0 10px var(--paper), 0 0 24px rgba(242, 236, 225, .9);
 }
@@ -113,7 +113,7 @@ main, .bar, .tools { position: relative; z-index: 1; }
 .hero { display: flex; flex-direction: column; justify-content: space-between; min-height: 100svh; }
 .hero__eyebrow { font: .8rem/1.4 var(--mono); margin: 0; display: flex; gap: 10px; align-items: center; max-width: 60ch; }
 .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--vermilion); box-shadow: 0 0 0 4px rgba(210,70,42,.18); flex: none; }
-/* Navnet tegnes med blæk i vandet; den rigtige overskrift er der til skærmlæsere og som reserve uden GPU. */
+/* The name is drawn in ink on the water; the real heading is there for screen readers and as a fallback without GPU. */
 .hero__name {
   font: 400 clamp(3.4rem, 15vw, 13rem)/.86 var(--serif); font-variation-settings: "opsz" 144, "SOFT" 100, "WONK" 1;
   letter-spacing: -.045em; text-align: center; margin: 0; display: flex; flex-direction: column; align-items: center;
@@ -131,7 +131,7 @@ body.has-gpu .hero__name { opacity: 0; }
 .hint__finger::after { content: ""; position: absolute; inset: 11px; border-radius: 50%; background: var(--ink); animation: hint 2.4s var(--ease) infinite; }
 @keyframes hint { 0% { transform: translateX(-9px); } 50% { transform: translateX(9px); } 100% { transform: translateX(-9px); } }
 
-/* ---------------------------------------------------------------- 1 oprindelse */
+/* ---------------------------------------------------------------- 1 origin */
 .origin { display: flex; flex-direction: column; justify-content: center; }
 .origin .slip { margin-left: auto; }
 .origin .big { font-size: clamp(3.4rem, 13vw, 12rem); }
@@ -175,7 +175,7 @@ body.has-gpu .hero__name { opacity: 0; }
 .job--end { background: none; border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; text-align: center; padding-top: 40px; }
 .job--end::before { display: none; }
 
-/* de tre dansere fra hovedsitet, i en roligere udgave */
+/* the three dancers from the main site, in a calmer version */
 .dancers { display: flex; justify-content: center; align-items: flex-end; gap: 22px; margin-top: 8px; }
 .d-claude { width: 84px; animation: hop .8s ease-in-out infinite alternate; }
 .d-claude__arm--l { animation: wave .4s ease-in-out infinite alternate; transform-origin: 12px 17px; }
@@ -220,13 +220,13 @@ body.has-gpu .hero__name { opacity: 0; }
 .card:nth-child(2) { transform: translateY(40px); }
 @media (max-width: 980px) { .poi__cards { grid-template-columns: 1fr; } .card:nth-child(2) { transform: none; } }
 
-/* ---------------------------------------------------------------- 5 kontakt */
+/* ---------------------------------------------------------------- 5 contact */
 .contact { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding-bottom: 150px; }
 .foot { position: absolute; left: var(--gutter); right: var(--gutter); bottom: 96px; display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; font: .78rem/1.5 var(--mono); color: var(--ink-2); }
 .foot__links { display: flex; gap: 16px; flex-wrap: wrap; }
 .foot__tech { flex-basis: 100%; }
 
-/* ---------------------------------------------------------------- værktøjsbakken */
+/* ---------------------------------------------------------------- tool tray */
 .tools {
   position: fixed; z-index: 30; left: 50%; bottom: max(14px, env(safe-area-inset-bottom));
   transform: translateX(-50%);
@@ -261,7 +261,7 @@ body:not(.has-gpu) .tools { display: none; }
   .tools { gap: 4px; }
 }
 
-/* ---------------------------------------------------------------- mobil */
+/* ---------------------------------------------------------------- mobile */
 @media (max-width: 860px) {
   body { font-size: 16px; }
   .cv { display: block; }

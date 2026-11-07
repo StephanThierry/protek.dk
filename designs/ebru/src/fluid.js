@@ -1,19 +1,19 @@
-﻿// Ebru-vandet: en Navier–Stokes-væskesimulering (stable fluids) skrevet i TSL og kørt på GPU'en
-// gennem three.js' WebGPURenderer. Hver delberegning er en fuldskærms-QuadMesh, der skriver til en
-// render target (ping-pong). WebGPU bruges, hvor browseren kan; ellers falder rendereren selv tilbage
-// til WebGL2, og den samme TSL-kode oversættes til GLSL i stedet for WGSL.
+﻿// The ebru water: a Navier-Stokes fluid simulation (stable fluids) written in TSL and run on the GPU
+// via three.js' WebGPURenderer. Each pass is a fullscreen QuadMesh writing to a
+// render target (ping-pong). WebGPU is used where the browser supports it; otherwise the renderer falls back
+// to WebGL2 and the same TSL code compiles to GLSL instead of WGSL.
 //
-// Blæk lagres som absorbans (Beer–Lambert): papir * exp(-blæk). Det giver subtraktiv farveblanding,
-// så indigo over okker bliver grøn-sort, ligesom rigtig marmorering på vand.
+// Ink is stored as absorbance (Beer-Lambert): paper * exp(-ink). That gives subtractive colour mixing,
+// so indigo over ochre turns green-black, like real marbling on water.
 import * as THREE from 'three/webgpu';
 import {
   Fn, uniform, texture, uv, vec2, vec3, vec4, float, exp, dot, length, abs, clamp, mix, fract, floor, mod,
   sin, max, normalize, select, smoothstep, screenCoordinate,
 } from 'three/tsl';
 
-const srgbToLinear = (hex) => new THREE.Color(hex); // THREE.Color konverterer hex til lineært arbejdsrum
+const srgbToLinear = (hex) => new THREE.Color(hex); // THREE.Color converts hex to linear working space
 
-// Papirets farve. Blækkets absorbans udledes af, hvordan farven ser ud mættet på papiret.
+// Paper colour. Ink absorbance is derived from how the colour looks saturated on the paper.
 export const PAPER = 0xf2ece1;
 export function absorbance(hex, strength = 1) {
   const p = srgbToLinear(PAPER), c = srgbToLinear(hex);
@@ -23,8 +23,8 @@ export function absorbance(hex, strength = 1) {
 
 export async function createFluid(canvas, opts = {}) {
   const small = Math.min(window.innerWidth, window.innerHeight) < 700;
-  const SIM = opts.sim ?? (small ? 112 : 160);       // celler på den korte led
-  const DYE = opts.dye ?? (small ? 560 : 1024);     // blæk-opløsning på den korte led
+  const SIM = opts.sim ?? (small ? 112 : 160);       // cells along the short side
+  const DYE = opts.dye ?? (small ? 560 : 1024);     // ink resolution along the short side
   const ITER = opts.iterations ?? (small ? 12 : 20);
 
   const renderer = new THREE.WebGPURenderer({ canvas, antialias: false, alpha: false, forceWebGL: !!opts.forceWebGL });
@@ -33,8 +33,8 @@ export async function createFluid(canvas, opts = {}) {
   renderer.autoClear = false;
   const isGPU = !!renderer.backend.isWebGPUBackend;
   const backend = isGPU ? 'WebGPU' : 'WebGL2';
-  // QuadMesh-uv har y=0 foroven i både WebGPU og WebGL2 (verificeret i headless Chrome). API'et tager
-  // skærmkoordinater (y nedad) og oversætter her, så resten af koden er ligeglad med retningen.
+  // QuadMesh uv has y=0 at the top in both WebGPU and WebGL2 (verified in headless Chrome). The API takes
+  // screen coordinates (y down) and converts here, so the rest of the code doesn't care about direction.
   const flip = true;
   const Y = (y) => (flip ? y : 1 - y);
   const VY = (vy) => (flip ? vy : -vy);
@@ -77,11 +77,11 @@ export async function createFluid(canvas, opts = {}) {
     valueB: uniform(new THREE.Vector3()), ringR: uniform(0.1), ringW: uniform(0.0004),
     wDisc: uniform(0), wRing: uniform(0), wMask: uniform(0), wSwirl: uniform(0), wComb: uniform(0),
     combFreq: uniform(10), combAxis: uniform(0), combAlt: uniform(1), combPhase: uniform(0),
-    // visning
+    // display
     paper: uniform(srgbToLinear(PAPER)), res: uniform(new THREE.Vector2(1, 1)), sheen: uniform(1),
   };
 
-  // Tomme pladsholdere; .value skiftes før hver pass (samme mønster som three's AfterImageNode).
+  // Empty placeholders; .value is swapped before each pass (same pattern as three's AfterImageNode).
   const blank = new THREE.Texture();
   const tVel = texture(blank), tSrc = texture(blank), tPrs = texture(blank), tDiv = texture(blank), tCurl = texture(blank);
   const maskTex = new THREE.CanvasTexture(document.createElement('canvas'));
@@ -99,7 +99,7 @@ export async function createFluid(canvas, opts = {}) {
     return m;
   };
 
-  // --- hvirvling (curl) og vorticity confinement, som holder de små hvirvler i live
+  // --- curl and vorticity confinement, which keeps the small eddies alive
   const curlMat = material(Fn(() => {
     const L = tVel.sample(off(-1, 0)).y, R = tVel.sample(off(1, 0)).y;
     const T = tVel.sample(off(0, 1)).x, B = tVel.sample(off(0, -1)).x;
@@ -115,7 +115,7 @@ export async function createFluid(canvas, opts = {}) {
     return vec4(clamp(v, -1000, 1000), 0, 1);
   })());
 
-  // --- divergens med lukkede kanter (spejling ved randen)
+  // --- divergence with closed edges (mirrored at the boundary)
   const divMat = material(Fn(() => {
     const C = tVel.sample(uv()).xy;
     const uL = off(-1, 0), uR = off(1, 0), uT = off(0, 1), uB = off(0, -1);
@@ -128,20 +128,20 @@ export async function createFluid(canvas, opts = {}) {
 
   const decayMat = material(Fn(() => vec4(tPrs.sample(uv()).x.mul(U.pressureDecay), 0, 0, 1))());
 
-  // --- Jacobi-iterationer for trykket
+  // --- Jacobi iterations for pressure
   const jacobiMat = material(Fn(() => {
     const s = tPrs.sample(off(-1, 0)).x.add(tPrs.sample(off(1, 0)).x).add(tPrs.sample(off(0, 1)).x).add(tPrs.sample(off(0, -1)).x);
     return vec4(s.sub(tDiv.sample(uv()).x).mul(0.25), 0, 0, 1);
   })());
 
-  // --- træk trykgradienten fra, så feltet bliver divergensfrit (inkompressibelt vand)
+  // --- subtract the pressure gradient so the field is divergence-free (incompressible water)
   const gradMat = material(Fn(() => {
     const L = tPrs.sample(off(-1, 0)).x, R = tPrs.sample(off(1, 0)).x;
     const T = tPrs.sample(off(0, 1)).x, B = tPrs.sample(off(0, -1)).x;
     return vec4(tVel.sample(uv()).xy.sub(vec2(R.sub(L), T.sub(B))), 0, 1);
   })());
 
-  // --- semi-lagrangsk advektion; dissipation styrer, hvor længe blækket bliver liggende
+  // --- semi-Lagrangian advection; dissipation controls how long the ink lingers
   const advect = (diss) => material(Fn(() => {
     const coord = uv().sub(tVel.sample(uv()).xy.mul(U.simTexel).mul(U.dt));
     return tSrc.sample(coord).div(float(1).add(diss.mul(U.dt)));
@@ -149,7 +149,7 @@ export async function createFluid(canvas, opts = {}) {
   const advVelMat = advect(U.velDiss);
   const advDyeMat = advect(U.dyeDiss);
 
-  // --- splat: dråbe, ring, tekstmaske, hvirvel eller kam. Vægtene vælger, hvad der lægges til.
+  // --- splat: drop, ring, text mask, swirl or comb. The weights choose what gets added.
   const splatMat = material(Fn(() => {
     const p = uv().sub(U.point).mul(vec2(U.aspect, 1));
     const d2 = dot(p, p);
@@ -161,8 +161,8 @@ export async function createFluid(canvas, opts = {}) {
       .add(U.value.mul(m.r).add(U.valueB.mul(m.g)).mul(U.wMask));
     return vec4(max(tSrc.sample(uv()).rgb.add(add), vec3(0)), 1);
   })());
-  // Hastighed: skub, hvirvel (tangentielt felt) og kam. Kammen giver tænder med jævn afstand,
-  // skiftevis frem og tilbage (gel-git) eller samme vej, som når man trækker en kam gennem ebru-vandet.
+  // Velocity: push, swirl (tangential field) and comb. The comb gives evenly spaced teeth,
+  // alternating back and forth (gel-git) or the same way, like dragging a comb through ebru water.
   const velSplatMat = material(Fn(() => {
     const p = uv().sub(U.point).mul(vec2(U.aspect, 1));
     const disc = exp(dot(p, p).negate().div(U.radius));
@@ -180,7 +180,7 @@ export async function createFluid(canvas, opts = {}) {
 
   const clearMat = material(vec4(0, 0, 0, 1));
 
-  // --- visning: papir gennem blæk, en svag våd glans ud fra blækkets hældning og lidt papirkorn
+  // --- display: paper through ink, a faint wet sheen from the ink gradient and some paper grain
   const displayMat = material(Fn(() => {
     const a = tSrc.sample(uv()).rgb;
     const e = U.dyeTexel.mul(1.5);
@@ -198,7 +198,7 @@ export async function createFluid(canvas, opts = {}) {
     return vec4(ink.mul(shade).add(spec.mul(U.sheen)).add(grain).add(fiber), 1);
   })());
 
-  // ------------------------------------------------------------------ afvikling
+  // ------------------------------------------------------------------ execution
   const quad = new THREE.QuadMesh();
   const run = (mat, target) => { quad.material = mat; renderer.setRenderTarget(target); quad.render(renderer); };
 
@@ -210,9 +210,9 @@ export async function createFluid(canvas, opts = {}) {
 
   function applySplat(s) {
     resetWeights();
-    // Uden punkt (maske, rydning) bruges midten; NaN her ville gøre hele feltet NaN, også når vægten er 0.
+    // Without a point (mask, clear) the centre is used; NaN here would make the whole field NaN, even at weight 0.
     U.point.value.set(s.x ?? 0.5, Y(s.y ?? 0.5));
-    // størrelser er givet i forhold til den korte led, så en dråbe er lige rund og stor på mobil og desktop
+    // sizes are relative to the short side, so a drop is equally round and large on mobile and desktop
     const k = Math.min(1, U.aspect.value);
     U.radius.value = ((s.r ?? 0.03) * k) ** 2;
     if (s.kind === 'force') {
@@ -239,7 +239,7 @@ export async function createFluid(canvas, opts = {}) {
 
   function applyComb(c, now) {
     const k = Math.min(1, (now - c.t0) / c.ms);
-    // blød ind- og udtoning, mens kammen trækkes gennem vandet
+    // soft fade in and out while the comb is dragged through the water
     const env = Math.sin(Math.PI * k);
     resetWeights();
     U.wComb.value = 1;
@@ -278,13 +278,13 @@ export async function createFluid(canvas, opts = {}) {
     run(displayMat, null);
   }
 
-  // ------------------------------------------------------------------ størrelse
+  // ------------------------------------------------------------------ size
   let lastW = 0, lastH = 0;
   function resize(force = false) {
     const w = canvas.clientWidth || window.innerWidth, h = canvas.clientHeight || window.innerHeight;
     renderer.setSize(w, h, false);
     U.res.value.set(w, h);
-    // Mobilens adresselinje ændrer højden en smule; simuleringen bevares, medmindre formatet skifter.
+    // The mobile address bar changes the height slightly; the simulation is kept unless the aspect changes.
     const changed = !lastW || Math.abs(w / h - lastW / lastH) > 0.12 || Math.abs(w - lastW) > 40;
     if (force || changed) { allocate(); lastW = w; lastH = h; return true; }
     return false;
@@ -292,10 +292,10 @@ export async function createFluid(canvas, opts = {}) {
   resize(true);
   renderer.setAnimationLoop(step);
 
-  // ------------------------------------------------------------------ tekst som blæk
+  // ------------------------------------------------------------------ text as ink
   function writeText(lines, inkA, inkB, { amount = 1, y = 0.42, size = 0.17, font = 'Fraunces' } = {}) {
     const w = dyeW, h = dyeH;
-    // En GPU-tekstur kan ikke skifte størrelse efter første upload, så der laves en ny, når formatet ændres.
+    // A GPU texture cannot be resized after the first upload, so a new one is made when the aspect changes.
     let c = tMask.value.image;
     if (!c || c.width !== w || c.height !== h) {
       c = document.createElement('canvas');
@@ -332,7 +332,7 @@ export async function createFluid(canvas, opts = {}) {
     get fps() { return fps; },
     get cells() { return `${simW}×${simH}`; },
     resize,
-    // x, y i 0..1 af skærmen, y nedad som i CSS
+    // x, y in 0..1 of the screen, y down as in CSS
     drop(x, y, ink, r = 0.04) { queue.push({ kind: 'drop', x, y, ink, r }); },
     ring(x, y, ink, ringR, ringW = 0.012) { queue.push({ kind: 'ring', x, y, ink, ringR, ringW }); },
     force(x, y, dx, dy, r = 0.035, ink = null) { queue.push({ kind: 'force', x, y, dx, dy, r, ink }); },

@@ -25,7 +25,7 @@ body {
   font: 400 clamp(1rem, 0.96rem + 0.2vw, 1.0625rem)/1.6 var(--f-text);
   -webkit-font-smoothing: antialiased; overflow-x: hidden;
 }
-/* Papirstruktur */
+/* Paper texture */
 body::before {
   content: ""; position: fixed; inset: 0; z-index: 100; pointer-events: none; opacity: 0.35; mix-blend-mode: multiply;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.45 0 0 0 0 0.35 0 0 0 .25 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
@@ -35,7 +35,7 @@ a { color: inherit; }
 ::selection { background: var(--yellow); color: var(--ink); }
 :focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
 
-/* ------------------------------------------------------------- knapper */
+/* ------------------------------------------------------------- buttons */
 .btn {
   display: inline-flex; align-items: center; gap: 0.4em;
   padding: 0.7em 1.25em; border: var(--line); border-radius: 999px;
@@ -75,13 +75,13 @@ a { color: inherit; }
 .top__nav a:hover, .top__nav a.is-on { background: var(--ink); color: var(--paper); }
 @media (max-width: 820px) { .top__nav { display: none; } }
 
-/* ------------------------------------------------------------- typografi */
+/* ------------------------------------------------------------- typography */
 .tag { margin: 0; font: 600 0.78rem/1.4 var(--f-mono); letter-spacing: 0.1em; text-transform: uppercase; }
 .h2 { margin: 0; font: 800 clamp(2.2rem, 5.4vw, 4.8rem)/0.95 var(--f-display); letter-spacing: -0.035em; text-wrap: balance; }
 .h3 { margin: 0; font: 800 clamp(1.6rem, 3vw, 2.4rem)/1 var(--f-display); letter-spacing: -0.02em; }
 .lede { margin: 0; font-size: clamp(1.05rem, 1rem + 0.4vw, 1.3rem); line-height: 1.5; color: var(--ink-soft); max-width: 42ch; }
 
-/* ------------------------------------------------------------- 1 · legeplads */
+/* ------------------------------------------------------------- 1 · playground */
 .play {
   position: relative; height: 100svh; min-height: 560px; overflow: hidden;
   user-select: none; -webkit-user-select: none; isolation: isolate;
@@ -126,7 +126,7 @@ a { color: inherit; }
   .play__intro { top: 5rem; }
 }
 
-/* ------------------------------------------------------------- 2 · oprindelse */
+/* ------------------------------------------------------------- 2 · origin */
 .origin { position: relative; height: 220vh; view-timeline: --origin block; border-top: var(--line); background: var(--paper-2); }
 .origin__stage {
   position: sticky; top: 0; height: 100svh; overflow: hidden;
@@ -211,7 +211,7 @@ a { color: inherit; }
 @keyframes deal-l { from { opacity: 0; transform: translateX(-35%) rotate(-9deg); } to { opacity: 1; transform: none; } }
 @keyframes deal-r { from { opacity: 0; transform: translateX(35%) rotate(9deg); } to { opacity: 1; transform: none; } }
 
-/* Fald-tilbage uden scroll-drevne animationer */
+/* Fallback without scroll-driven animations */
 .no-sda .job, .no-sda .poi__card, .no-sda .topics li { opacity: 0; transform: translateY(40px) rotate(-2deg); transition: opacity 0.7s var(--ease), transform 0.8s var(--pop); }
 .no-sda .is-in { opacity: 1 !important; transform: none !important; }
 @media (prefers-reduced-motion: reduce) { .no-sda .job, .no-sda .poi__card, .no-sda .topics li { opacity: 1; transform: none; } }
@@ -248,7 +248,7 @@ a { color: inherit; }
   .topics { grid-template-columns: 1fr; }
 }
 
-/* ------------------------------------------------------------- 5 · interesser */
+/* ------------------------------------------------------------- 5 · interests */
 .poi { padding: 6rem var(--gutter); border-top: var(--line); display: grid; gap: 1.2rem; }
 .poi__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
 .poi__card { border: var(--line); border-radius: 6px; background: var(--paper-2); padding: 1.4rem; box-shadow: 8px 8px 0 var(--c); display: grid; align-content: start; gap: 0.6rem; }
@@ -275,7 +275,7 @@ a { color: inherit; }
 @keyframes pop { from { opacity: 0; transform: translateY(80px) rotate(4deg) scale(0.9); } to { opacity: 1; transform: none; } }
 @media (max-width: 900px) { .poi__grid { grid-template-columns: 1fr; } }
 
-/* ------------------------------------------------------------- 6 · kontakt */
+/* ------------------------------------------------------------- 6 · contact */
 .contact { background: var(--yellow); border-top: var(--line); overflow: hidden; }
 .marquee { border-bottom: var(--line); background: var(--ink); color: var(--yellow); overflow: hidden; padding: 0.6rem 0; }
 .marquee__track { display: flex; width: max-content; font: 800 clamp(2rem, 6vw, 4.5rem)/1 var(--f-display); letter-spacing: -0.03em; white-space: nowrap; }
@@ -297,7 +297,7 @@ a { color: inherit; }
 .foot a { text-decoration: none; font-weight: 600; }
 .foot a:hover { text-decoration: underline; }
 
-/* ------------------------------------------------------------- AI-figurerne */
+/* ------------------------------------------------------------- AI figures */
 .dancers { display: flex; align-items: flex-end; gap: 1.5rem; }
 .dancers > * { flex: none; height: 3.2rem; width: auto; overflow: visible; }
 .d-claude { aspect-ratio: 64 / 44; }

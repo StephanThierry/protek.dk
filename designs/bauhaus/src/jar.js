@@ -2,7 +2,7 @@ import Matter from 'matter-js';
 
 const { Engine, Bodies, Body, Composite, Constraint, Query, Vector } = Matter;
 
-// Krukken: én fysisk stjerne for hver GitHub-stjerne. Tælleren følger med, mens de falder i.
+// The jar: one physics star per GitHub star. The counter keeps up as they fall in.
 export function jar(root, { counter, reduced = false } = {}) {
   const canvas = root.querySelector('canvas');
   const ctx = canvas.getContext('2d');
@@ -77,7 +77,7 @@ export function jar(root, { counter, reduced = false } = {}) {
   function draw() {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, W, H);
-    // glasset
+    // glass
     const top = H * 0.12, rad = Math.min(40, W * 0.08);
     ctx.fillStyle = 'rgba(35, 72, 196, 0.06)';
     ctx.strokeStyle = '#141210';
@@ -91,15 +91,15 @@ export function jar(root, { counter, reduced = false } = {}) {
     ctx.quadraticCurveTo(W - pad + 2, H - pad + 2, W - pad + 2, H - pad + 2 - rad);
     ctx.lineTo(W - pad + 2, top);
     ctx.fill(); ctx.stroke();
-    // kant
+    // rim
     ctx.beginPath(); ctx.moveTo(pad - 12, top); ctx.lineTo(pad + 10, top); ctx.moveTo(W - pad - 10, top); ctx.lineTo(W - pad + 12, top); ctx.stroke();
-    // stjerner
+    // stars
     ctx.lineWidth = 1.4;
     for (const b of stars) {
       starPath(b.position.x, b.position.y, r * 1.18, b.angle);
       ctx.fillStyle = b.plugin.c; ctx.fill(); ctx.stroke();
     }
-    // glasrefleks
+    // glass highlight
     ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 6;
     ctx.beginPath(); ctx.moveTo(pad + 16, top + 24); ctx.lineTo(pad + 16, top + (H - top) * 0.35); ctx.stroke();
   }
@@ -115,7 +115,7 @@ export function jar(root, { counter, reduced = false } = {}) {
   }
   function start() { if (running) return; running = true; last = performance.now(); requestAnimationFrame(tick); }
 
-  // Træk i stjernerne
+  // Drag the stars
   let drag = null;
   canvas.addEventListener('pointerdown', (e) => {
     const p = local(e);

@@ -1,4 +1,4 @@
-/* protek.dk: sidens egne regler. Motoren (scrollcraft.css/js) røres ikke. */
+/* protek.dk: the site's own rules. The engine (scrollcraft.css/js) is left untouched. */
 
 :root {
   --sc-canvas:     #0A0E10;
@@ -102,14 +102,14 @@
 .rail > * { flex: none; }
 .rail__lead { width: clamp(17rem, 34vw, 30rem); align-self: flex-end; }
 .rail__end { width: clamp(15rem, 24vw, 22rem); align-self: flex-end; }
-/* Luft efter sidste kort. Skal være et rigtigt element, for end-margen og pseudo-elementer tæller ikke med i sporets bredde. */
+/* Space after the last card. Must be a real element, since end margin and pseudo-elements don't count toward the track width. */
 .rail__gap { width: var(--sc-gutter); height: 1px; margin-left: calc(var(--rail-gap) * -1); }
 
-/* Tre små AI-figurer, hver med sin egen bevægelse. Kører kun uden "reducer bevægelse". */
+/* Three small AI figures, each with its own motion. Only runs without "reduce motion". */
 .dancers { display: flex; align-items: flex-end; gap: clamp(1rem, 2vw, 1.75rem); margin-top: var(--sc-5); }
 .dancers > * { flex: none; height: clamp(2.6rem, 3.6vw, 3.4rem); width: auto; overflow: visible; }
 
-/* Clawd (Claude-maskotten): pixelfigur, der danser. Arme op og ned i modtakt, ben skifter, øjne blinker. */
+/* Clawd (the Claude mascot): a dancing pixel figure. Arms up and down off-beat, legs alternate, eyes blink. */
 .d-claude { aspect-ratio: 64 / 44; }
 .d-claude__arm { transform-box: fill-box; transform-origin: 0 100%; }
 .d-claude__arm--r { transform-origin: 100% 100%; }
@@ -118,18 +118,18 @@
 .d-claude__all { transform-box: view-box; transform-origin: 50% 100%; }
 .d-claude__shadow { transform-box: fill-box; transform-origin: 50% 50%; }
 
-/* OpenAI: logoet i en hvid rund flise, der ruller rundt og trækker vejret. */
+/* OpenAI: the logo in a white round tile that rolls around and breathes. */
 .d-openai {
   aspect-ratio: 1; border-radius: 50%; overflow: hidden !important;
   position: relative; background: #fff; box-shadow: 0 0 0 1px var(--sc-hairline-strong);
 }
-/* Logoet er et baggrundsbillede, så det ligger præcis i midten af cirklen. */
+/* The logo is a background image so it sits exactly in the centre of the circle. */
 .d-openai::before {
   content: ""; position: absolute; inset: 0;
   background: url("../img/openai.jpg") 50% 50% / 124% auto no-repeat;
 }
 
-/* Gemini: stjernen pulserer og vrider sig, og tre små gnister glimter rundt om den. */
+/* Gemini: the star pulses and twists, and three small sparks twinkle around it. */
 .d-gemini { aspect-ratio: 1; }
 .d-gemini__main { transform-box: fill-box; transform-origin: 50% 50%; }
 .d-gemini__spark { transform-box: fill-box; transform-origin: 50% 50%; opacity: 0; }
@@ -233,7 +233,7 @@
   display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: clamp(1rem, 3vw, 2.5rem); align-items: start;
   padding-block: var(--sc-5); border-top: 1px solid var(--sc-hairline); }
 .poi__list > div > dt, .poi__list > div > dd { grid-column: 1; }
-/* Logo i højre side. Ens mørke fliser, så de tre står ens. */
+/* Logo on the right. Identical dark tiles so all three match. */
 .poi__logo {
   grid-column: 2; grid-row: 1 / span 2;
   position: relative; overflow: hidden;
@@ -242,13 +242,13 @@
   box-shadow: 0 0 0 1px var(--sc-hairline-strong);
 }
 .poi__logo--protek { background-image: url("../img/protek-star.png"); background-size: 100% auto; }
-/* Bloodturn: det hvide B (sort B-ikon gjort hvidt). */
+/* Bloodturn: the white B (black B icon made white). */
 .poi__logo--bloodturn::before {
   content: ""; position: absolute; inset: 0;
   background: url("../img/bloodturn-b.png") 50% 50% / 74% auto no-repeat;
   filter: brightness(0) invert(1);
 }
-/* TravelMind: kun hjertet, beskåret ud af det hvide logo. */
+/* TravelMind: just the heart, cropped from the white logo. */
 .poi__logo--travelmind { background-image: url("../img/travelmind-heart.png"); background-size: 100% auto; }
 .poi__list dt {
   font-family: var(--sc-font-display); font-weight: 600;
@@ -256,8 +256,8 @@
 }
 .poi__list dd { margin: var(--sc-2) 0 0; max-width: var(--sc-measure); color: var(--sc-ink-soft); text-wrap: pretty; }
 .poi__list a { color: var(--sc-accent); white-space: nowrap; margin-left: 0.4em; }
-/* Mobil: portrættet er helt synligt og viskes væk mod venstre, mens det forlader skærmen i toppen
-   (samme visk som på desktop, bare omvendt). */
+/* Mobile: the portrait is fully visible and wipes away to the left as it leaves the top of the screen
+   (same wipe as on desktop, just reversed). */
 @keyframes poi-fig-out { from { clip-path: inset(0 0 0 0); } to { clip-path: inset(0 100% 0 0); } }
 @media (max-width: 860px) {
   @supports (animation-timeline: view()) {
@@ -278,8 +278,8 @@
 .close__inner { padding: 0 var(--sc-gutter); }
 .close__inner .sc-display { max-width: 16ch; margin-inline: auto; }
 .close__inner .btn { margin-top: var(--sc-7); }
-/* Kontakt toner ind, mens sektionen glider op (view-tidslinje), i stedet for først efter fastlåsning.
-   Uden understøttelse står indholdet bare der. */
+/* Contact fades in while the section slides up (view timeline), instead of only after pinning.
+   Without support the content is simply shown. */
 @keyframes close-in { from { opacity: 0; translate: 0 2rem; } to { opacity: 1; translate: 0 0; } }
 @supports (animation-timeline: view()) {
   .close__inner .sc-display, .close__inner .btn { animation: close-in linear both; animation-timeline: view(); }
@@ -329,25 +329,25 @@
 .gh__star { display: inline-block; color: #e3b341; vertical-align: -0.1em; margin-left: 0.1em; }
 .gh__repos span { display: block; margin-top: var(--sc-1); color: var(--sc-ink-soft); font-size: var(--sc-t-sm); }
 @media (max-width: 860px) {
-  /* Fast topbar: hold tallet fri af den, som årstallet i CV-sektionen. */
+  /* Fixed top bar: keep the number clear of it, like the year in the CV section. */
   .gh { grid-template-columns: 1fr; gap: var(--sc-4); padding-top: clamp(5.5rem, 13vh, 7rem); padding-bottom: var(--sc-5); }
   .gh__num { font-size: clamp(4.5rem, 26vw, 8rem); }
   .gh__repos b { font-size: var(--sc-t-lg); }
 }
 
 /* -------------------------------------------------------------------- mark */
-/* Alt drives af --sc-p (0 til 1) på sektionen. Hver spids har sin egen forsinkelse (--i). */
+/* Everything is driven by --sc-p (0 to 1) on the section. Each point has its own delay (--i). */
 @property --enter { syntax: "<number>"; inherits: true; initial-value: 0; }
 @keyframes mark-enter { from { --enter: 0; } to { --enter: 1; } }
 @supports (animation-timeline: view()) {
   .mark { animation: mark-enter linear both; animation-timeline: view(); animation-range: entry 8% entry 100%; }
 }
 .mark {
-  /* Forløbet starter allerede, mens sektionen glider ind nedefra (--enter, 0 til 1), og fortsætter
-     efter pin (--sc-p). 35 % klares under indskydningen, resten er færdigt ved ca. 33 % af pin-scrollet.
-     Uden scroll-styrede animationer er --enter 0, og forløbet starter ved pin som før. */
+  /* The sequence starts while the section slides in from below (--enter, 0 to 1) and continues
+     after the pin (--sc-p). 35% happens during the slide-in, the rest is done at about 33% of the pin scroll.
+     Without scroll-driven animations --enter is 0 and the sequence starts at the pin as before. */
   --p: clamp(0, calc(var(--enter) * 0.35 + var(--sc-p, 0) / 0.5), 1);
-  /* f: 0 = mørk silhuet, 1 = tændt. Tændingen sker i anden halvdel. */
+  /* f: 0 = dark silhouette, 1 = lit. Lighting happens in the second half. */
   --f: clamp(0, calc((var(--p) - 0.42) / 0.3), 1);
   --neon: calc((1 - var(--f)) * clamp(0, var(--p) * 8, 1));
   --blue-d: #3f7a8f; --blue-m: #4f96aa; --blue-l: #5ba9bf;
@@ -364,15 +364,15 @@
 }
 .mark__spin {
   transform-box: view-box; transform-origin: 520px 490px;
-  /* ruller fra -50° og lander ved p = 0.8, så hviler den */
+  /* rolls from -50deg and lands at p = 0.8, then rests */
   transform: rotate(calc((1 - clamp(0, var(--p) / 0.8, 1)) * -50deg));
 }
 .sp {
   transform-box: view-box; transform-origin: 520px 490px;
-  /* start = 0.02 + i * 0.03, vokser over 0.16 af forløbet */
+  /* start = 0.02 + i * 0.03, grows over 0.16 of the sequence */
   --g: clamp(0, calc((var(--p) - 0.02 - var(--i) * 0.03) / 0.16), 1);
   --e: calc(1 - (1 - var(--g)) * (1 - var(--g)) * (1 - var(--g)));
-  /* skår: hver spids flyver ind roteret og samles */
+  /* shards: each point flies in rotated and assembles */
   transform: rotate(calc((1 - var(--e)) * (var(--i) * 2 - 8) * 6deg)) scale(var(--e));
   opacity: clamp(0, calc(var(--g) * 6), 1);
 }
@@ -402,7 +402,7 @@
   line-height: 0.85; letter-spacing: -0.04em;
   color: transparent;
   -webkit-text-stroke: 1px color-mix(in oklab, var(--sc-accent) 55%, transparent);
-  /* fyldet fejer ind fra venstre mellem p = 0.45 og 0.9 */
+  /* the fill sweeps in from the left between p = 0.45 and 0.9 */
   background: linear-gradient(90deg, var(--sc-ink) 0, var(--sc-ink) calc(clamp(0, (var(--p) - 0.45) / 0.45, 1) * 100%), transparent calc(clamp(0, (var(--p) - 0.45) / 0.45, 1) * 100%));
   -webkit-background-clip: text; background-clip: text;
   padding-right: 0.08em;
@@ -421,7 +421,7 @@
   .mark__word { font-size: clamp(3rem, 18vw, 6rem); }
 }
 
-/* ------------------------------------------------------------- næste-pil */
+/* ------------------------------------------------------------- next arrow */
 .next {
   position: fixed; z-index: var(--sc-z-chrome);
   right: var(--sc-gutter); bottom: max(0.75rem, env(safe-area-inset-bottom));

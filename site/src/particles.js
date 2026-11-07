@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import { GPUComputationRenderer } from 'three/examples/jsm/misc/GPUComputationRenderer.js';
 
-// GPGPU-partikler: positionerne bor i en float-tekstur og opdateres i en fragment-shader hvert frame.
-// Hver partikel trækkes mod en blanding af to målformer (A -> B), skubbes af curl-støj og af musen.
+// GPGPU particles: positions live in a float texture, updated in a fragment shader every frame.
+// Each particle is pulled toward a blend of two target shapes (A -> B), pushed by curl noise and the mouse.
 
 const NOISE = /* glsl */ `
 vec4 permute(vec4 x){return mod(((x*34.0)+1.0)*x,289.0);}
@@ -49,7 +49,7 @@ void main(){
   float rnd = a.w;
   float k = smoothstep(rnd*0.45, rnd*0.45+0.55, uBlend);
   vec3 target = mix(a.xyz + uShiftA, b.xyz + uShiftB, k);
-  float travel = k*(1.0-k)*4.0;                       // 1 midt i et formskifte
+  float travel = k*(1.0-k)*4.0;                       // 1 mid-transition
   vec3 pos = p.xyz;
   float turb = uTurb + travel*2.6 + uKick;
   pos += curl(pos*0.28 + vec3(0.0, uTime*0.06, rnd)) * turb * uDt;
@@ -99,7 +99,7 @@ export class Particles {
     if (!renderer.extensions.has('EXT_color_buffer_float')) gpu.setDataType(THREE.HalfFloatType);
     this.gpu = gpu;
 
-    // Start: et stort, spredt sky, så første frame "samler" heroen.
+    // Start: a large scattered cloud so the first frames "assemble" the hero.
     const init = gpu.createTexture();
     const d = init.image.data;
     for (let i = 0; i < this.count; i++) {
@@ -147,7 +147,7 @@ export class Particles {
     this.colTex = [];
   }
 
-  // shapes: [{pos, colors}] fra buildShapes. Genbruger teksturerne ved resize.
+  // shapes: [{pos, colors}] from buildShapes. Reuses the textures on resize.
   setShapes(shapes) {
     shapes.forEach((s, i) => {
       if (!this.posTex[i]) {

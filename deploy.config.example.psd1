@@ -1,7 +1,7 @@
-# Kopier til deploy.config.psd1 (ignoreres af git) og ret vaerdierne til dit setup.
+# Copy to deploy.config.psd1 (ignored by git) and adjust the values to your setup.
 @{
-  # Webmappen paa serveren, som sitet publiceres til (UNC-sti eller lokal sti).
+  # Web folder on the server that the site is published to (UNC or local path).
   Destination = '\\server\web\protek.dk'
-  # Offentlig adresse, vises efter deploy.
+  # Public URL, shown after deploy.
   PublicUrl   = 'https://protek.dk/'
 }
