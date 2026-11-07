@@ -1,0 +1,639 @@
+# Builds every 3D element for protek.dk/blender in Blender and renders them.
+# Driven from Claude Code via the Blender MCP server:
+#   exec(open(r'<repo>/designs/blender/blender/scene.py').read()); build_all(); render_all()
+# Each element lives in its own collection; render_one() shows only that collection.
+# Renders are written as transparent WEBP to designs/blender/public/renders/,
+# the live star is exported as GLB to designs/blender/public/models/.
+import bpy, bmesh, math, os
+from mathutils import Vector
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) if '__file__' in globals() else r'D:\dev\github.com\protek.dk\designs\blender'
+OUT_RENDERS = os.path.join(ROOT, 'public', 'renders')
+OUT_MODELS = os.path.join(ROOT, 'public', 'models')
+
+TAU = math.pi * 2
+
+# Palette shared with the particle front page and the Plakat star.
+PAL = {
+    'blue_d': '#3f7a8f', 'blue_m': '#4f96aa', 'blue_l': '#5ba9bf',
+    'mint': '#7CF0C2', 'ice': '#E9F0EE', 'teal': '#2BB3A6', 'deep': '#1C5E6B',
+    'coral': '#FF8A5B', 'gold': '#FFD27A', 'violet': '#9B8CFF',
+}
+
+
+def lin(h):
+    """sRGB hex -> linear RGBA for Blender colour sockets."""
+    h = h.lstrip('#')
+    c = [int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)]
+    return tuple(((x / 12.92) if x <= 0.04045 else ((x + 0.055) / 1.055) ** 2.4) for x in c) + (1.0,)
+
+
+# ---------------------------------------------------------------- scene setup
+
+def reset():
+    for o in list(bpy.data.objects):
+        bpy.data.objects.remove(o, do_unlink=True)
+    for c in list(bpy.data.collections):
+        bpy.data.collections.remove(c)
+    for block in (bpy.data.meshes, bpy.data.materials, bpy.data.curves, bpy.data.lights, bpy.data.cameras):
+        for b in list(block):
+            if b.users == 0:
+                block.remove(b)
+
+
+def setup_render(samples=256, res=(1600, 1600)):
+    s = bpy.context.scene
+    s.render.engine = 'CYCLES'
+    prefs = bpy.context.preferences.addons['cycles'].preferences
+    prefs.compute_device_type = 'OPTIX'
+    prefs.refresh_devices()
+    for d in prefs.devices:
+        d.use = d.type == 'OPTIX'
+    s.cycles.device = 'GPU'
+    s.cycles.samples = samples
+    s.cycles.use_denoising = True
+    s.cycles.denoiser = 'OPTIX'
+    s.render.film_transparent = True
+    s.render.resolution_x, s.render.resolution_y = res
+    s.render.resolution_percentage = 100
+    s.view_settings.view_transform = 'AgX'
+    s.view_settings.look = 'AgX - Medium High Contrast'
+    s.render.image_settings.file_format = 'WEBP'
+    s.render.image_settings.color_mode = 'RGBA'
+    s.render.image_settings.quality = 84
+
+    # Dark world with a faint teal horizon: shows up only in reflections.
+    w = bpy.data.worlds.get('World') or bpy.data.worlds.new('World')
+    s.world = w
+    w.use_nodes = True
+    nt = w.node_tree
+    nt.nodes.clear()
+    tc = nt.nodes.new('ShaderNodeTexCoord')
+    sep = nt.nodes.new('ShaderNodeSeparateXYZ')
+    ramp = nt.nodes.new('ShaderNodeValToRGB')
+    ramp.color_ramp.elements[0].position = 0.45
+    ramp.color_ramp.elements[0].color = lin('#05090B')
+    ramp.color_ramp.elements[1].position = 0.75
+    ramp.color_ramp.elements[1].color = lin('#1C3F47')
+    bg = nt.nodes.new('ShaderNodeBackground')
+    bg.inputs['Strength'].default_value = 0.6
+    out = nt.nodes.new('ShaderNodeOutputWorld')
+    nt.links.new(tc.outputs['Generated'], sep.inputs[0])
+    nt.links.new(sep.outputs['Z'], ramp.inputs['Fac'])
+    nt.links.new(ramp.outputs['Color'], bg.inputs['Color'])
+    nt.links.new(bg.outputs[0], out.inputs[0])
+
+
+def coll(name):
+    c = bpy.data.collections.get(name)
+    if not c:
+        c = bpy.data.collections.new(name)
+        bpy.context.scene.collection.children.link(c)
+    return c
+
+
+def link(obj, c):
+    for uc in obj.users_collection:
+        uc.objects.unlink(obj)
+    c.objects.link(obj)
+    return obj
+
+
+def lights():
+    c = coll('Lights')
+
+    def area(name, loc, size, energy, color='#FFFFFF'):
+        L = bpy.data.lights.new(name, 'AREA')
+        L.shape = 'DISK'
+        L.size = size
+        L.energy = energy
+        L.color = lin(color)[:3]
+        o = bpy.data.objects.new(name, L)
+        o.location = loc
+        o.rotation_euler = (Vector((0, 0, 0)) - Vector(loc)).to_track_quat('-Z', 'Y').to_euler()
+        c.objects.link(o)
+
+    area('Key', (-6, -7, 9), 7, 2400, '#FFF4E8')
+    area('Rim', (7, 6, 4), 4, 1800, '#9FDDF7')
+    area('Fill', (-8, 2, -3), 6, 300, '#7CF0C2')
+    area('Top', (0, 0, 12), 10, 500)
+
+
+def camera():
+    cam = bpy.data.objects.get('Cam')
+    if not cam:
+        cd = bpy.data.cameras.new('Cam')
+        cam = bpy.data.objects.new('Cam', cd)
+        coll('Lights').objects.link(cam)
+    bpy.context.scene.camera = cam
+    return cam
+
+
+def aim(cam, loc, target=(0, 0, 0), lens=70):
+    cam.location = loc
+    cam.rotation_euler = (Vector(target) - Vector(loc)).to_track_quat('-Z', 'Y').to_euler()
+    cam.data.lens = lens
+
+
+# ---------------------------------------------------------------- materials
+
+def mat(name, color, metallic=0.0, rough=0.3, coat=0.0, emission=None, strength=0.0,
+        transmission=0.0, ior=1.45, thin_film=0.0):
+    m = bpy.data.materials.get(name) or bpy.data.materials.new(name)
+    m.use_nodes = True
+    b = m.node_tree.nodes.get('Principled BSDF')
+    b.inputs['Base Color'].default_value = lin(color)
+    b.inputs['Metallic'].default_value = metallic
+    b.inputs['Roughness'].default_value = rough
+    b.inputs['Coat Weight'].default_value = coat
+    b.inputs['Transmission Weight'].default_value = transmission
+    b.inputs['IOR'].default_value = ior
+    if emission:
+        b.inputs['Emission Color'].default_value = lin(emission)
+        b.inputs['Emission Strength'].default_value = strength
+    if thin_film and 'Thin Film Thickness' in b.inputs:
+        b.inputs['Thin Film Thickness'].default_value = thin_film
+        b.inputs['Thin Film IOR'].default_value = 1.4
+    return m
+
+
+def x_gradient_mat(name, c0, c1, xmin, xmax, metallic=0.2, rough=0.25, coat=0.6):
+    """Colour ramp along object X (helix strands go teal -> violet)."""
+    m = mat(name, c0, metallic, rough, coat)
+    nt = m.node_tree
+    tc = nt.nodes.new('ShaderNodeTexCoord')
+    sep = nt.nodes.new('ShaderNodeSeparateXYZ')
+    mr = nt.nodes.new('ShaderNodeMapRange')
+    mr.inputs['From Min'].default_value = xmin
+    mr.inputs['From Max'].default_value = xmax
+    ramp = nt.nodes.new('ShaderNodeValToRGB')
+    ramp.color_ramp.elements[0].color = lin(c0)
+    ramp.color_ramp.elements[1].color = lin(c1)
+    nt.links.new(tc.outputs['Object'], sep.inputs[0])
+    nt.links.new(sep.outputs['X'], mr.inputs['Value'])
+    nt.links.new(mr.outputs['Result'], ramp.inputs['Fac'])
+    nt.links.new(ramp.outputs['Color'], nt.nodes['Principled BSDF'].inputs['Base Color'])
+    return m
+
+
+def pla_mat(name, color, layer=0.06):
+    """Matte PLA with printed layer lines (bump from a wave texture along Z)."""
+    m = mat(name, color, 0.0, 0.42, 0.15)
+    nt = m.node_tree
+    tc = nt.nodes.new('ShaderNodeTexCoord')
+    wave = nt.nodes.new('ShaderNodeTexWave')
+    wave.bands_direction = 'Z'
+    wave.inputs['Scale'].default_value = 1.0 / layer / 6.0
+    wave.inputs['Distortion'].default_value = 0.4
+    wave.inputs['Detail'].default_value = 1.0
+    bump = nt.nodes.new('ShaderNodeBump')
+    bump.inputs['Strength'].default_value = 0.35
+    bump.inputs['Distance'].default_value = 0.02
+    nt.links.new(tc.outputs['Object'], wave.inputs['Vector'])
+    nt.links.new(wave.outputs['Fac'], bump.inputs['Height'])
+    nt.links.new(bump.outputs['Normal'], nt.nodes['Principled BSDF'].inputs['Normal'])
+    return m
+
+
+def bed_mat(name):
+    """Textured PEI print plate that fades out radially (so it sits on the page background)."""
+    m = mat(name, '#20262A', 0.6, 0.55)
+    m.blend_method = 'BLEND' if hasattr(m, 'blend_method') else None
+    nt = m.node_tree
+    b = nt.nodes['Principled BSDF']
+    tc = nt.nodes.new('ShaderNodeTexCoord')
+    noise = nt.nodes.new('ShaderNodeTexNoise')
+    noise.inputs['Scale'].default_value = 900
+    bump = nt.nodes.new('ShaderNodeBump')
+    bump.inputs['Strength'].default_value = 0.25
+    nt.links.new(tc.outputs['Object'], noise.inputs['Vector'])
+    nt.links.new(noise.outputs['Fac'], bump.inputs['Height'])
+    nt.links.new(bump.outputs['Normal'], b.inputs['Normal'])
+    # radial fade -> alpha
+    grad = nt.nodes.new('ShaderNodeTexGradient')
+    grad.gradient_type = 'SPHERICAL'
+    mapn = nt.nodes.new('ShaderNodeMapping')
+    mapn.inputs['Scale'].default_value = (0.24, 0.24, 0.24)
+    ramp = nt.nodes.new('ShaderNodeValToRGB')
+    ramp.color_ramp.elements[0].position = 0.0
+    ramp.color_ramp.elements[0].color = (0, 0, 0, 1)
+    ramp.color_ramp.elements[1].position = 0.6
+    ramp.color_ramp.elements[1].color = (1, 1, 1, 1)
+    nt.links.new(tc.outputs['Object'], mapn.inputs['Vector'])
+    nt.links.new(mapn.outputs['Vector'], grad.inputs['Vector'])
+    nt.links.new(grad.outputs['Fac'], ramp.inputs['Fac'])
+    nt.links.new(ramp.outputs['Color'], b.inputs['Alpha'])
+    return m
+
+
+# ---------------------------------------------------------------- geometry helpers
+
+def mesh_obj(name, verts, faces, c, material=None, smooth=False):
+    me = bpy.data.meshes.new(name)
+    me.from_pydata(verts, [], faces)
+    me.validate()
+    me.update()
+    o = bpy.data.objects.new(name, me)
+    c.objects.link(o)
+    if material:
+        me.materials.append(material)
+    if smooth:
+        for p in me.polygons:
+            p.use_smooth = True
+    return o
+
+
+def bevel(o, width=0.03, segments=3, harden=True):
+    m = o.modifiers.new('Bevel', 'BEVEL')
+    m.width = width
+    m.segments = segments
+    m.limit_method = 'ANGLE'
+    m.harden_normals = harden
+    if harden:
+        for p in o.data.polygons:
+            p.use_smooth = True
+    return m
+
+
+def offset_poly(p, d):
+    """Offset a CCW polygon outward by d (miter, clamped). Emulates the SVG stroke on the star."""
+    n = len(p)
+    if sum((p[i][0] * p[(i + 1) % n][1] - p[(i + 1) % n][0] * p[i][1]) for i in range(n)) < 0:
+        p = p[::-1]
+    out = []
+    for i in range(n):
+        a, b, c = Vector(p[i - 1]), Vector(p[i]), Vector(p[(i + 1) % n])
+        e0, e1 = (b - a).normalized(), (c - b).normalized()
+        n0, n1 = Vector((e0.y, -e0.x)), Vector((e1.y, -e1.x))
+        m = (n0 + n1)
+        if m.length < 1e-6:
+            m = n0
+        m.normalize()
+        k = min(d / max(m.dot(n0), 0.25), d * 3)
+        out.append(tuple(b + m * k))
+    return out
+
+
+def prism_from_poly(name, poly, ztop, zbot, c, material):
+    """Extrude a 2D polygon; ztop(x, y) gives a per-vertex top height (lets the star tips lift)."""
+    n = len(poly)
+    verts = [(x, y, zbot) for x, y in poly] + [(x, y, ztop(x, y)) for x, y in poly]
+    faces = [list(range(n))[::-1], list(range(n, 2 * n))]
+    for i in range(n):
+        j = (i + 1) % n
+        faces.append([i, j, n + j, n + i])
+    return mesh_obj(name, verts, faces, c, material)
+
+
+def curve_tube(name, pts, radius, c, material, cyclic=False, res=4):
+    cu = bpy.data.curves.new(name, 'CURVE')
+    cu.dimensions = '3D'
+    cu.bevel_depth = radius
+    cu.bevel_resolution = res
+    cu.use_fill_caps = True
+    sp = cu.splines.new('POLY')
+    sp.points.add(len(pts) - 1)
+    for p, q in zip(sp.points, pts):
+        p.co = (q[0], q[1], q[2], 1)
+    sp.use_cyclic_u = cyclic
+    o = bpy.data.objects.new(name, cu)
+    c.objects.link(o)
+    cu.materials.append(material)
+    return o
+
+
+def cylinder_between(name, a, b, r, c, material, r2=None, verts=24):
+    a, b = Vector(a), Vector(b)
+    d = b - a
+    bpy.ops.mesh.primitive_cone_add(vertices=verts, radius1=r, radius2=r if r2 is None else r2,
+                                    depth=d.length, location=(a + b) / 2)
+    o = bpy.context.active_object
+    o.name = name
+    o.rotation_euler = d.to_track_quat('Z', 'Y').to_euler()
+    o.data.materials.append(material)
+    link(o, c)
+    return o
+
+
+def sphere(name, loc, r, c, material, seg=48):
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=seg, ring_count=seg // 2, radius=r, location=loc)
+    o = bpy.context.active_object
+    o.name = name
+    o.data.materials.append(material)
+    bpy.ops.object.shade_smooth()
+    link(o, c)
+    return o
+
+
+# ---------------------------------------------------------------- the Protek star
+
+# Shards straight from the SVG logo (viewBox 1000, centre 520,490), tone d/m/l.
+STAR_SVG = [
+    ('d', [(257, 197), (468, 378), (520, 490), (420, 412)]),
+    ('d', [(177, 684), (450, 490), (520, 490), (420, 585)]),
+    ('d', [(717, 694), (610, 537), (520, 490), (580, 582)]),
+    ('m', [(424, 45), (540, 430), (505, 500), (462, 400)]),
+    ('m', [(283, 880), (465, 520), (520, 490), (500, 575)]),
+    ('m', [(925, 538), (585, 458), (520, 490), (612, 538)]),
+    ('l', [(117, 352), (512, 430), (520, 490), (485, 528)]),
+    ('l', [(640, 980), (572, 488), (520, 470), (485, 528)]),
+    ('l', [(731, 242), (572, 488), (520, 490), (512, 430)]),
+]
+STAR_SCALE = 6.4 / 1000          # same world scale as the particle star
+STAR_STROKE = 11 * STAR_SCALE    # half of the SVG stroke-width 22
+
+
+def star_shards():
+    """Shards as (tone, polygon) in world units, y up, centred on the core."""
+    out = []
+    for tone, pts in STAR_SVG:
+        poly = [((x - 520) * STAR_SCALE, -(y - 490) * STAR_SCALE) for x, y in pts]
+        out.append((tone, offset_poly(poly, STAR_STROKE)))
+    return out
+
+
+def star_top(x, y):
+    # flat back; the top rises toward the tips, so the star reads as a faceted relief
+    return 0.16 + 0.11 * math.hypot(x, y)
+
+
+def build_star(name='Star', c=None, with_rings=True, materials=None):
+    c = c or coll(name)
+    mats = materials or {
+        'd': mat('Star_d', '#2E6578', 0.0, 0.22, 1.0),
+        'm': mat('Star_m', PAL['blue_m'], 0.0, 0.2, 1.0),
+        'l': mat('Star_l', '#79C3D6', 0.0, 0.18, 1.0),
+    }
+    objs = []
+    for i, (tone, poly) in enumerate(star_shards()):
+        o = prism_from_poly(f'{name}_shard{i}', poly, star_top, 0.0, c, mats[tone])
+        bevel(o, 0.025, 3)
+        objs.append(o)
+    core = sphere(f'{name}_core', (0, 0, 0.3), 26 * STAR_SCALE * 1.3, c,
+                  mat('Core', '#FFFFFF', emission='#FFFFFF', strength=12))
+    objs.append(core)
+    if with_rings:
+        ring_m = mat('Ring', PAL['mint'], 0.0, 0.3, emission=PAL['mint'], strength=2.5)
+        ring_m2 = mat('Ring_in', PAL['blue_l'], 0.0, 0.3, emission=PAL['blue_l'], strength=1.6)
+        for rn, R, m, tilt in ((f'{name}_ring', 470 * STAR_SCALE, ring_m, 8), (f'{name}_ring_in', 330 * STAR_SCALE, ring_m2, -6)):
+            bpy.ops.mesh.primitive_torus_add(major_radius=R, minor_radius=0.03, major_segments=256, minor_segments=12, location=(0, 0, 0))
+            r = bpy.context.active_object
+            r.name = rn
+            r.rotation_euler = (math.radians(tilt), math.radians(tilt * 0.6), 0)
+            r.data.materials.append(m)
+            bpy.ops.object.shade_smooth()
+            link(r, c)
+            objs.append(r)
+    return objs
+
+
+# ---------------------------------------------------------------- other elements
+
+def build_helix():
+    """Career helix: two strands along X, rungs, one glowing node per workplace (10)."""
+    c = coll('Helix')
+    L, R, k = 9.0, 0.9, 1.1
+    sm = x_gradient_mat('Strand', PAL['teal'], PAL['violet'], -L / 2, L / 2)
+    for off, nm in ((0, 'A'), (math.pi, 'B')):
+        pts = [(x, math.cos(x * k + off) * R, math.sin(x * k + off) * R)
+               for x in (-L / 2 - 0.5 + i * (L + 1) / 400 for i in range(401))]
+        curve_tube(f'Strand{nm}', pts, 0.075, c, sm)
+    rm = mat('Rung', PAL['deep'], 0.3, 0.3, 0.5)
+    x = -L / 2
+    i = 0
+    while x <= L / 2:
+        a = x * k
+        cylinder_between(f'Rung{i}', (x, math.cos(a) * R, math.sin(a) * R),
+                         (x, -math.cos(a) * R, -math.sin(a) * R), 0.025, c, rm, verts=12)
+        x += 0.42
+        i += 1
+    for n in range(10):
+        t = n / 9
+        col = PAL['mint'] if n == 9 else '#%02X%02X%02X' % tuple(
+            round(int(PAL['gold'][j:j + 2], 16) * (1 - t) + int(PAL['coral'][j:j + 2], 16) * t) for j in (1, 3, 5))
+        nx = -L / 2 + (n + 0.5) * L / 10
+        sphere(f'Node{n}', (nx, 0, 0), 0.26 if n == 9 else 0.19, c,
+               mat(f'Node{n}', col, emission=col, strength=1.0 if n == 9 else 0.5))
+
+
+def build_ghstar():
+    """GitHub star: a five-pointed gem in brushed gold."""
+    c = coll('GhStar')
+    Ro, Ri = 2.2, 0.95
+    rim = []
+    for i in range(10):
+        a = math.pi / 2 + i * math.pi / 5
+        r = Ro if i % 2 == 0 else Ri
+        rim.append((math.cos(a) * r, math.sin(a) * r))
+    verts = [(x, y, 0.0) for x, y in rim] + [(x, y, -0.28) for x, y in rim] + [(0, 0, 0.62), (0, 0, -0.28)]
+    top, bot = 20, 21
+    faces = []
+    for i in range(10):
+        j = (i + 1) % 10
+        faces.append([i, j, top])
+        faces.append([i + 10, j + 10, j, i][::-1])
+        faces.append([j + 10, i + 10, bot])
+    o = mesh_obj('GhStar', verts, faces, c, mat('Gold', PAL['gold'], 1.0, 0.22, 0.3))
+    bevel(o, 0.02, 2, harden=False)
+
+
+def build_knot():
+    """(2,3) torus knot with an iridescent thin-film finish. Everything is connected."""
+    c = coll('Knot')
+    pts = []
+    for i in range(600):
+        t = TAU * i / 600
+        r = 2.0 + 0.8 * math.cos(3 * t)
+        pts.append((r * math.cos(2 * t), r * math.sin(2 * t), 0.8 * math.sin(3 * t)))
+    curve_tube('Knot', pts, 0.42, c, mat('Iridescent', '#9AA8B0', 1.0, 0.14, 0.5, thin_film=420), cyclic=True, res=8)
+
+
+def build_prism():
+    """One white beam (legacy) splits into five colours (the five AI designs)."""
+    c = coll('Prism')
+    A, B, C = (0, 1.3), (-1.35, -1.05), (1.35, -1.05)
+    glass = mat('Glass', '#FFFFFF', 0.0, 0.02, transmission=1.0, ior=1.5)
+    o = prism_from_poly('Prism', [A, B, C], lambda x, y: 0.6, -0.6, c, glass)
+    bevel(o, 0.04, 3)
+    lerp = lambda p, q, t: (p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t)
+    pin, pout = lerp(A, B, 0.55), lerp(A, C, 0.6)
+    white = mat('BeamW', '#FFFFFF', emission='#FFFFFF', strength=4)
+    cylinder_between('BeamIn', (-4.2, -0.9, 0), (pin[0], pin[1], 0), 0.035, c, white)
+    cylinder_between('BeamGlass', (pin[0], pin[1], 0), (pout[0], pout[1], 0), 0.05, c,
+                     mat('BeamG', '#FFFFFF', emission='#E9F0EE', strength=3))
+    rays = ['#E8452C', '#C9F27A', '#7CF0C2', '#4FA3B5', '#6C7BE0']
+    for i, col in enumerate(rays):
+        a = math.radians(-6 - i * 7)
+        end = (pout[0] + math.cos(a) * 4.2, pout[1] + math.sin(a) * 4.2, 0)
+        cylinder_between(f'Ray{i}', (pout[0], pout[1], 0), end, 0.03, c,
+                         mat(f'Ray{i}', col, emission=col, strength=2.2), r2=0.11)
+
+
+def build_at():
+    """@ for contact: extruded glyph in tinted chrome."""
+    c = coll('At')
+    cu = bpy.data.curves.new('At', 'FONT')
+    cu.body = '@'
+    cu.size = 4.2
+    cu.extrude = 0.22
+    cu.bevel_depth = 0.04
+    cu.bevel_resolution = 3
+    cu.align_x = 'CENTER'
+    cu.align_y = 'CENTER'
+    o = bpy.data.objects.new('At', cu)
+    c.objects.link(o)
+    cu.materials.append(mat('Chrome', '#A9D8E6', 1.0, 0.1, 0.4))
+
+
+def build_print_bed():
+    """The star as a finished print: mint PLA with layer lines on a textured plate."""
+    c = coll('PrintBed')
+    pla = pla_mat('PLA', PAL['mint'])
+    build_star('Printed', c, with_rings=False, materials={'d': pla, 'm': pla, 'l': pla})
+    bpy.data.objects['Printed_core'].data.materials[0] = pla
+    bpy.data.objects['Printed_core'].location.z = 0.12
+    bpy.ops.mesh.primitive_plane_add(size=11, location=(0, 0, -0.001))
+    bed = bpy.context.active_object
+    bed.name = 'Bed'
+    bed.data.materials.append(bed_mat('PEI'))
+    link(bed, c)
+
+
+def build_print_layers(layers=8, gap=0.24):
+    """'Slicer' view: the same star cut into horizontal layers and pulled apart."""
+    c = coll('PrintLayers')
+    zmax = max(star_top(x, y) for _, p in star_shards() for x, y in p)
+    h = zmax / layers
+    for li in range(layers):
+        z0, z1 = li * h, (li + 1) * h
+        t = li / (layers - 1)
+        col = '#%02X%02X%02X' % tuple(
+            round(int(PAL['deep'][j:j + 2], 16) * (1 - t) + int(PAL['mint'][j:j + 2], 16) * t) for j in (1, 3, 5))
+        m = mat(f'Layer{li}', col, 0.0, 0.35, 0.4, emission=col, strength=0.25)
+        for si, (tone, poly) in enumerate(star_shards()):
+            o = prism_from_poly(f'L{li}_{si}', poly, star_top, 0.0, c, m)
+            bm = bmesh.new()
+            bm.from_mesh(o.data)
+            for co, no, clear_inner in ((z1, (0, 0, 1), False), (z0, (0, 0, 1), True)):
+                geom = bm.verts[:] + bm.edges[:] + bm.faces[:]
+                res = bmesh.ops.bisect_plane(bm, geom=geom, plane_co=(0, 0, co), plane_no=no,
+                                             clear_outer=not clear_inner, clear_inner=clear_inner)
+                cut = [e for e in res['geom_cut'] if isinstance(e, bmesh.types.BMEdge)]
+                if cut:
+                    bmesh.ops.holes_fill(bm, edges=cut)
+            bm.to_mesh(o.data)
+            bm.free()
+            if len(o.data.vertices) == 0:
+                bpy.data.objects.remove(o, do_unlink=True)
+                continue
+            o.location.z = li * gap
+            bevel(o, 0.008, 1)
+
+
+# ---------------------------------------------------------------- shots
+
+# name -> (collection, camera location, target, lens, resolution)
+SHOTS = {
+    'star':    ('Star',        (2.0, -7.0, 9.0),  (0, 0, 0.2),  40, (1600, 1600)),
+    'helix':   ('Helix',       (0.5, -12, 3.4),   (0, 0, 0),    40, (2000, 1000)),
+    'ghstar':  ('GhStar',      (1.5, -5.2, 5.4),  (0, 0, 0),    55, (1400, 1400)),
+    'knot':    ('Knot',        (0, -8.5, 6.5),    (0, 0, 0),    50, (1400, 1400)),
+    'prism':   ('Prism',       (0.5, -3.4, 11.5), (0.5, -0.7, 0), 45, (2000, 1250)),
+    'at':      ('At',          (1.2, -6.0, 8.0),  (0, 0, 0),    55, (1400, 1400)),
+    'print':   ('PrintBed',    (3.5, -8.0, 5.6),  (0, 0, 0.0),  45, (1600, 1200)),
+    'layers':  ('PrintLayers', (4.0, -8.0, 6.2),  (0, 0, 1.0),  50, (1600, 1200)),
+}
+
+
+def build_all():
+    reset()
+    setup_render()
+    lights()
+    camera()
+    build_star()
+    build_helix()
+    build_ghstar()
+    build_knot()
+    build_prism()
+    build_at()
+    build_print_bed()
+    build_print_layers()
+    return [c.name for c in bpy.data.collections]
+
+
+def show_only(name):
+    for c in bpy.context.scene.collection.children:
+        vis = c.name in (name, 'Lights')
+        c.hide_render = not vis
+        c.hide_viewport = not vis
+
+
+def render_one(key, samples=None, path=None, percent=100):
+    cname, loc, target, lens, res = SHOTS[key]
+    s = bpy.context.scene
+    show_only(cname)
+    aim(camera(), loc, target, lens)
+    s.render.resolution_x, s.render.resolution_y = res
+    s.render.resolution_percentage = percent
+    if samples:
+        s.cycles.samples = samples
+    os.makedirs(OUT_RENDERS, exist_ok=True)
+    s.render.filepath = path or os.path.join(OUT_RENDERS, f'{key}.webp')
+    bpy.ops.render.render(write_still=True)
+    return s.render.filepath
+
+
+def render_all(samples=256):
+    return [render_one(k, samples) for k in SHOTS]
+
+
+def export_star_glb():
+    """Export the star (shards, core, rings) as GLB for the live Three.js hero."""
+    show_only('Star')
+    bpy.ops.object.select_all(action='DESELECT')
+    for o in bpy.data.collections['Star'].objects:
+        o.select_set(True)
+    os.makedirs(OUT_MODELS, exist_ok=True)
+    path = os.path.join(OUT_MODELS, 'star.glb')
+    bpy.ops.export_scene.gltf(filepath=path, export_format='GLB', use_selection=True,
+                              export_apply=True, export_yup=True, export_draco_mesh_compression_enable=False)
+    return path
+
+
+def check_print(target_mm=80.0):
+    """Printability check of the star, as quoted on the page.
+    Unions the evaluated shards + core (exact boolean), then measures at target_mm across:
+    non-manifold edges, size, volume, downward-facing area steeper than 45 deg (overhang) and the flat base."""
+    import bmesh as _bm
+    dg = bpy.context.evaluated_depsgraph_get()
+    src = [o for o in bpy.data.collections['Star'].objects if 'shard' in o.name or o.name == 'Star_core']
+    copies = []
+    for o in src:
+        me = bpy.data.meshes.new_from_object(o.evaluated_get(dg))
+        c = bpy.data.objects.new('chk_' + o.name, me)
+        c.matrix_world = o.matrix_world.copy()
+        bpy.context.scene.collection.objects.link(c)
+        copies.append(c)
+    base = copies[0]
+    for c in copies[1:]:
+        m = base.modifiers.new('U', 'BOOLEAN')
+        m.operation, m.solver, m.object = 'UNION', 'EXACT', c
+        with bpy.context.temp_override(object=base, active_object=base):
+            bpy.ops.object.modifier_apply(modifier=m.name)
+    bm = _bm.new()
+    bm.from_mesh(base.data)
+    dims = base.dimensions.copy()
+    k = target_mm / max(dims.x, dims.y)
+    res = {
+        'nonmanifold': sum(1 for e in bm.edges if not e.is_manifold),
+        'dims_mm': tuple(round(v * k, 1) for v in dims),
+        'volume_cm3': round(bm.calc_volume() * k ** 3 / 1000, 2),
+        'overhang_mm2': round(sum(f.calc_area() for f in bm.faces
+                                  if f.normal.z < -0.7071 and f.calc_center_median().z > 0.01) * k * k, 1),
+        'base_mm2': round(sum(f.calc_area() for f in bm.faces
+                              if f.normal.z < -0.999 and f.calc_center_median().z <= 0.01) * k * k, 1),
+    }
+    bm.free()
+    for c in copies:
+        bpy.data.objects.remove(c, do_unlink=True)
+    return res

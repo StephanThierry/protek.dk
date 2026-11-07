@@ -12,6 +12,7 @@ Stephan Thierry's personal site. The front page is the particle design; the othe
 | `designs/bauhaus/` | `/designs/bauhaus/` | Bauhaus playground with Matter.js physics (Vite). |
 | `designs/tidende/` | `/designs/tidende/` | Protek Tidende, a newspaper front page typeset live with Pretext (Vite). |
 | `designs/ebru/` | `/designs/ebru/` | Ebru, marbling on water: WebGPU/TSL stable fluids (Vite). |
+| `designs/blender/` | `/blender/` | Every 3D element modelled and rendered in Blender by Claude Code via the Blender MCP server; live star as GLB in Three.js (Vite). Includes a section on the 3D-print workflow. Not in the showcase yet. `blender/scene.py` rebuilds the scene and renders: run it in Blender via MCP (`build_all(); render_all(); export_star_glb(); check_print()`). |
 | `react/` | `/react/` | The ReactJS presentation from Ditmer Academy 2016. Not deployed from here. |
 
 The five AI designs were made with AI in 2 hours combined; the legacy site took a full day by hand.
