@@ -89,7 +89,7 @@ function initGL() {
       { x: 0, y: narrow ? h * 0.12 : -h * 0.06, s: helixScale }, // helix
       { x: -side, y: up, s: fit * 0.85 },          // GitHub-stjerne
       { x: side, y: up, s: fit * 0.92 },           // knude
-      { x: side * 1.05, y: narrow ? h * 0.24 : h * 0.02, s: fit * (narrow ? 0.6 : 0.95) }, // timeglas
+      { x: side * 1.05, y: narrow ? h * 0.25 : h * 0.04, s: fit * (narrow ? 0.88 : 0.85) }, // prisme
       { x: 0, y: narrow ? h * 0.18 : h * 0.17, s: fit * (narrow ? 0.9 : 0.68) }, // @
     ];
     particles.setShapes(buildShapes(particles.count, layout, particles.rnd));
@@ -320,7 +320,7 @@ if (finePointer && !reduced) {
   const xTo = gsap.quickTo(cursor, 'x', { duration: 0.35, ease: 'power3' });
   const yTo = gsap.quickTo(cursor, 'y', { duration: 0.35, ease: 'power3' });
   addEventListener('pointermove', (e) => { xTo(e.clientX); yTo(e.clientY); cursor.classList.add('is-on'); }, { passive: true });
-  document.addEventListener('pointerover', (e) => cursor.classList.toggle('is-link', !!e.target.closest('a, button')));
+  document.addEventListener('pointerover', (e) => cursor.classList.toggle('is-link', !!e.target.closest('a, button, .rail-nav')));
   document.addEventListener('pointerleave', () => cursor.classList.remove('is-on'));
 
   document.querySelectorAll('[data-magnet]').forEach((el) => {

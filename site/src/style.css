@@ -29,7 +29,8 @@ body {
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
-@media (hover: hover) and (pointer: fine) { body { cursor: none; } a, button { cursor: none; } }
+/* Den runde cursor bruges kun på fladen; links, knapper og sidemenuen får en almindelig hånd. */
+@media (hover: hover) and (pointer: fine) { body { cursor: none; } a, button, .rail-nav { cursor: pointer; } }
 img { max-width: 100%; display: block; }
 a { color: inherit; }
 ::selection { background: var(--accent); color: var(--accent-ink); }
@@ -99,7 +100,8 @@ a { color: inherit; }
 }
 
 .rail-nav {
-  position: fixed; z-index: 20; right: clamp(12px, 2vw, 2rem); top: 50%; transform: translateY(-50%);
+  position: fixed; z-index: 20; right: 0; top: 50%; transform: translateY(-50%);
+  padding: 1.5rem clamp(12px, 2vw, 2rem) 1.5rem 3rem; /* hele området om menuen er klikbart med hånd-cursor */
 }
 .rail-nav ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.9rem; }
 .rail-nav a {
@@ -125,7 +127,7 @@ a { color: inherit; }
   transition: width 0.35s var(--ease), height 0.35s var(--ease), margin 0.35s var(--ease), background 0.35s var(--ease), opacity 0.3s;
 }
 .cursor.is-on { opacity: 1; }
-.cursor.is-link { width: 64px; height: 64px; margin: -32px 0 0 -32px; background: #fff; }
+.cursor.is-on.is-link { opacity: 0; }
 @media not ((hover: hover) and (pointer: fine)) { .cursor { display: none; } }
 
 /* ------------------------------------------------------------- typografi */
@@ -265,7 +267,6 @@ main { position: relative; z-index: 5; }
 .clock__val { margin: 0; font: 700 1.05rem/1 var(--f-display); font-variant-numeric: tabular-nums; }
 .clock__row:first-child .clock__val { color: var(--gold); }
 .clock__row:nth-child(2) .clock__val { color: var(--accent); }
-.clock__cap { font: 400 0.78rem/1.5 var(--f-mono); color: var(--ink-dim); padding-left: 8.5rem; }
 
 /* Skærmbillede i en lille browserramme */
 .shot {
@@ -332,7 +333,6 @@ main { position: relative; z-index: 5; }
   .sec.designs { padding-top: 48vh; padding-bottom: 6rem; }
   .designs__intro, .clock { max-width: none; }
   .clock__row { grid-template-columns: 5.5rem minmax(0, 1fr) 3.8rem; gap: 0.7rem; }
-  .clock__cap { padding-left: 0; }
   .origin-card { grid-template-columns: 1fr; }
   .design-grid { grid-template-columns: 1fr; }
   .design, .design:nth-child(-n+2), .design:last-child { grid-column: auto; }

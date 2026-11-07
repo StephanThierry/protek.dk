@@ -209,51 +209,68 @@ function knot(i, r, out, col) {
   col.push(...mixc(PAL.violet, PAL.mint, (Math.sin(t * 3) + 1) / 2));
 }
 
-// 5 · Timeglas: én dag i hånden mod to timer med AI. Designs.
-// Glasset er en omdrejningsflade; sandet ligger mest i bunden, lidt i toppen og løber i en tynd stråle.
-const HG_H = 2.5; // halv højde af glasset
-function hgRadius(y) {
-  const t = Math.min(Math.abs(y) / HG_H, 1);
-  return 0.12 + 1.45 * Math.pow(Math.sin(t * Math.PI * 0.62), 1.15);
-}
-function hourglass(i, r, out, col) {
+// 5 · Prisme: én hvid lysstråle (legacy) spaltes i fem farver (de fem AI-designs). Designs.
+const PR_A = [0, 1.3], PR_B = [-1.35, -1.05], PR_C = [1.35, -1.05]; // trekanten, spids opad
+const PR_D = 0.6;                                                    // halv dybde
+const lerp2 = (p, q, t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
+const PR_IN = lerp2(PR_A, PR_B, 0.55);   // hvor strålen rammer venstre flade
+const PR_OUT = lerp2(PR_A, PR_C, 0.6);   // hvor farverne forlader højre flade
+const PR_SRC = [-3.4, -0.75];            // strålens start
+const PR_SHIFT = -0.55;                  // centrerer figuren vandret
+// Rækkefølge som et spektrum: Bauhaus, Plakat, Partikler, Tidende, Ebru.
+const PR_RAYS = ['#E8452C', '#C9F27A', '#7CF0C2', '#4FA3B5', '#6C7BE0'].map(hex);
+const PR_EDGES = [[PR_A, PR_B], [PR_B, PR_C], [PR_C, PR_A]];
+function prism(i, r, out, col) {
   const u = r();
-  if (u < 0.34) {
-    // glasskal
-    // y vægtes med radius, så halsen ikke får alt for mange punkter (og brænder ud i bloom)
-    let y = 0;
-    for (let k = 0; k < 8; k++) { y = (r() * 2 - 1) * HG_H; if (r() * 1.6 < hgRadius(y)) break; }
-    const a = TAU * r(), rad = hgRadius(y) + gauss(r) * 0.02;
-    out[0] = Math.cos(a) * rad; out[1] = y; out[2] = Math.sin(a) * rad;
-    col.push(...mixc(PAL.blueM, PAL.ice, r() * 0.7));
-  } else if (u < 0.5) {
-    // låg og bund + tre stolper
-    if (r() < 0.62) {
-      const s = r() < 0.5 ? 1 : -1, a = TAU * r(), rad = Math.sqrt(r()) * 1.85;
-      out[0] = Math.cos(a) * rad; out[1] = s * (HG_H + 0.12 + r() * 0.16); out[2] = Math.sin(a) * rad;
+  if (u < 0.2) {
+    // kanter: forside, bagside og de tre dybdekanter
+    if (r() < 0.72) {
+      const [p, q] = PR_EDGES[Math.floor(r() * 3)], [x, y] = lerp2(p, q, r());
+      out[0] = x + gauss(r) * 0.012; out[1] = y + gauss(r) * 0.012; out[2] = r() < 0.5 ? PR_D : -PR_D;
     } else {
-      const a = Math.floor(r() * 3) * (TAU / 3) + 0.5 + gauss(r) * 0.03;
-      out[0] = Math.cos(a) * 1.75; out[1] = (r() * 2 - 1) * (HG_H + 0.1); out[2] = Math.sin(a) * 1.75;
+      const v = [PR_A, PR_B, PR_C][Math.floor(r() * 3)];
+      out[0] = v[0]; out[1] = v[1]; out[2] = (r() * 2 - 1) * PR_D;
     }
-    col.push(...mixc(PAL.coral, PAL.gold, 0.35 + r() * 0.3));
-  } else if (u < 0.83) {
-    // sandbunke i bunden: kegleformet top
-    const yb = -HG_H + 0.05, a = TAU * r(), k = Math.sqrt(r());
-    const rmax = hgRadius(-HG_H * 0.55) * 0.96;
-    const rad = k * rmax, top = -HG_H * 0.55 + (1 - k) * 0.45;
-    const y = yb + r() * (top - yb);
-    out[0] = Math.cos(a) * Math.min(rad, hgRadius(y) * 0.95); out[1] = y; out[2] = Math.sin(a) * Math.min(rad, hgRadius(y) * 0.95);
-    col.push(...mixc(PAL.gold, PAL.coral, r() * 0.45));
-  } else if (u < 0.95) {
-    // resten af sandet i toppen, med en tragt ned mod halsen
-    const y = 0.25 + r() * (HG_H * 0.5), a = TAU * r(), rad = Math.sqrt(r()) * hgRadius(y) * 0.92;
-    out[0] = Math.cos(a) * rad; out[1] = y - (1 - rad / (hgRadius(y) + 1e-3)) * 0.18; out[2] = Math.sin(a) * rad;
-    col.push(...mixc(PAL.gold, PAL.coral, r() * 0.3));
+    col.push(...mixc(PAL.blueL, PAL.ice, r() * 0.6));
+  } else if (u < 0.31) {
+    // glassets flader, svagt
+    if (r() < 0.5) {
+      const [x, y] = samplePoly(r, [PR_A, PR_B, PR_C]);
+      out[0] = x; out[1] = y; out[2] = r() < 0.5 ? PR_D : -PR_D;
+    } else {
+      const [p, q] = PR_EDGES[Math.floor(r() * 3)], [x, y] = lerp2(p, q, r());
+      out[0] = x; out[1] = y; out[2] = (r() * 2 - 1) * PR_D;
+    }
+    col.push(...mixc(PAL.deep, PAL.blueM, r() * 0.5));
+  } else if (u < 0.45) {
+    // den hvide stråle ind
+    const [x, y] = lerp2(PR_SRC, PR_IN, r());
+    out[0] = x; out[1] = y + gauss(r) * 0.035; out[2] = gauss(r) * 0.035;
+    col.push(...mixc(PAL.ice, PAL.gold, r() * 0.25));
+  } else if (u < 0.49) {
+    // brydningen gennem glasset
+    const t = r(), [x, y] = lerp2(PR_IN, PR_OUT, t), w = 0.03 + t * 0.12;
+    out[0] = x; out[1] = y + gauss(r) * w; out[2] = gauss(r) * 0.05;
+    col.push(...PAL.ice);
+  } else if (u < 0.86) {
+    // fem farvede stråler, der vifter ud og bliver bredere
+    const k = Math.floor(r() * 5), t = Math.pow(r(), 0.85);
+    const ang = (-4 - k * 9.5) * Math.PI / 180, len = 2.6;
+    const dx = Math.cos(ang), dy = Math.sin(ang), w = 0.025 + t * 0.09;
+    const off = gauss(r) * w;
+    out[0] = PR_OUT[0] + dx * t * len - dy * off;
+    out[1] = PR_OUT[1] + dy * t * len + dx * off;
+    out[2] = gauss(r) * (0.03 + t * 0.1);
+    col.push(...mixc(PAL.ice, PR_RAYS[k], Math.min(1, 0.35 + t * 6)).map((c) => c * (0.8 - t * 0.25)));
   } else {
-    // strålen gennem halsen
-    out[0] = gauss(r) * 0.025; out[1] = 0.3 - r() * (HG_H * 0.55 + 0.3) * 1.0; out[2] = gauss(r) * 0.025;
-    col.push(...mixc(PAL.gold, PAL.ice, r() * 0.5));
+    // gnister for enden af strålerne
+    const k = Math.floor(r() * 5), ang = (-4 - k * 9.5) * Math.PI / 180, d = 2.6 + r() * 0.9;
+    out[0] = PR_OUT[0] + Math.cos(ang) * d + gauss(r) * 0.12;
+    out[1] = PR_OUT[1] + Math.sin(ang) * d + gauss(r) * 0.12;
+    out[2] = gauss(r) * 0.5;
+    col.push(...PR_RAYS[k]);
   }
+  out[0] += PR_SHIFT;
 }
 
 // 6 · @: samples fra et canvas med tegnet. Kontakt.
@@ -280,7 +297,7 @@ function at(i, r, out, col) {
   col.push(...mixc(PAL.mint, PAL.ice, r() * 0.6));
 }
 
-export const SHAPES = [nebula, star, helix, ghStar, knot, hourglass, at];
+export const SHAPES = [nebula, star, helix, ghStar, knot, prism, at];
 export const CV_INDEX = 2;
 
 // Bygger positions- og farvedata for alle former.
