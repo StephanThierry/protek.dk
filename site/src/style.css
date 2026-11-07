@@ -112,8 +112,9 @@ a { color: inherit; }
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   opacity: 0; transition: opacity 0.45s var(--ease);
 }
-.rail-nav:hover::before, .rail-nav:focus-within::before { opacity: 1; }
-.rail-nav:hover span, .rail-nav:focus-within span { opacity: 0.7; transform: none; }
+/* :focus-visible (ikke :focus-within), så et museklik ikke låser fladen fremme; kun tastatur-fokus gør. */
+.rail-nav:hover::before, .rail-nav:has(:focus-visible)::before { opacity: 1; }
+.rail-nav:hover span, .rail-nav:has(:focus-visible) span { opacity: 0.7; transform: none; }
 .rail-nav ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.9rem; }
 .rail-nav a {
   display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem;
