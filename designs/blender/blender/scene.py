@@ -375,11 +375,12 @@ def build_star(name='Star', c=None, with_rings=True, materials=None):
     if with_rings:
         ring_m = mat('Ring', PAL['mint'], 0.0, 0.3, emission=PAL['mint'], strength=2.5)
         ring_m2 = mat('Ring_in', PAL['blue_l'], 0.0, 0.3, emission=PAL['blue_l'], strength=1.6)
-        for rn, R, m, tilt in ((f'{name}_ring', 470 * STAR_SCALE, ring_m, 8), (f'{name}_ring_in', 330 * STAR_SCALE, ring_m2, -6)):
+        # flush with the logo: in its plane, crossing the shards like the rings in the SVG
+        for rn, R, m in ((f'{name}_ring', 470 * STAR_SCALE, ring_m), (f'{name}_ring_in', 330 * STAR_SCALE, ring_m2)):
             bpy.ops.mesh.primitive_torus_add(major_radius=R, minor_radius=0.03, major_segments=256, minor_segments=12, location=(0, 0, 0))
             r = bpy.context.active_object
             r.name = rn
-            r.rotation_euler = (math.radians(tilt), math.radians(tilt * 0.6), 0)
+            r.location.z = 0.12
             r.data.materials.append(m)
             bpy.ops.object.shade_smooth()
             link(r, c)
@@ -865,3 +866,62 @@ def export_dancers_glb():
 
 
 SHOTS['dancers'] = ('Dancers', (0, -12, 1.2), (0, 0, 0.3), 38, (1600, 640))
+
+
+# ---------------------------------------------------------------- GLB export of every element (live, rotating on the page)
+
+def _export(objs, filename, animations=False):
+    bpy.ops.object.select_all(action='DESELECT')
+    for o in objs:
+        o.hide_set(False)
+        o.select_set(True)
+    os.makedirs(OUT_MODELS, exist_ok=True)
+    path = os.path.join(OUT_MODELS, filename)
+    # meshopt keeps the curve-heavy models (helix, knot) small; three.js decodes it with MeshoptDecoder
+    bpy.ops.export_scene.gltf(filepath=path, export_format='GLB', use_selection=True, export_apply=True,
+                              export_yup=True, export_animations=animations,
+                              export_meshopt_compression_enable=True)
+    return path
+
+
+def _join(objs, name):
+    """Evaluated copies of objs joined into one mesh (curves, text and modifiers applied)."""
+    dg = bpy.context.evaluated_depsgraph_get()
+    bm = bmesh.new()
+    mats = []
+    for o in objs:
+        me = bpy.data.meshes.new_from_object(o.evaluated_get(dg))
+        me.transform(o.matrix_world)
+        offset = len(mats)
+        for m in me.materials:
+            mats.append(m)
+        for p in me.polygons:
+            p.material_index += offset
+        bm.from_mesh(me)
+        bpy.data.meshes.remove(me)
+    me = bpy.data.meshes.new(name)
+    bm.to_mesh(me)
+    bm.free()
+    for m in mats:
+        me.materials.append(m)
+    o = bpy.data.objects.new(name, me)
+    bpy.context.scene.collection.objects.link(o)
+    return o
+
+
+def export_element_glbs():
+    """helix, ghstar, knot, prism, at and layers (one node per layer). The printed star reuses star.glb."""
+    for c in bpy.context.scene.collection.children:
+        c.hide_viewport = False
+    out = {}
+    for key_, cname in (('helix', 'Helix'), ('ghstar', 'GhStar'), ('knot', 'Knot'), ('prism', 'Prism'), ('at', 'At')):
+        out[key_] = _export(list(bpy.data.collections[cname].objects), f'{key_}.glb')
+    # slicer view: one node per layer (named L0..), so the page can pull them apart and together
+    layers = {}
+    for o in bpy.data.collections['PrintLayers'].objects:
+        layers.setdefault(o.name.split('_')[0], []).append(o)
+    joined = [_join(v, k) for k, v in sorted(layers.items(), key=lambda kv: int(kv[0][1:]))]
+    out['layers'] = _export(joined, 'layers.glb')
+    for o in joined:
+        bpy.data.objects.remove(o, do_unlink=True)
+    return out

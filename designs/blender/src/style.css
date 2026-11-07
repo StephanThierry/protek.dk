@@ -189,12 +189,12 @@ a { color: inherit; }
 /* ---------------------------------------------------------------- CV */
 .cv__head p { max-width: 34rem; }
 .cv__year {
-  position: sticky; top: 64px; z-index: 3; margin: 0 0 12px; text-align: right;
+  margin: 0 0 12px; text-align: right;
   font-size: clamp(1.6rem, 4vw, 2.6rem); font-weight: 500; color: var(--ink); pointer-events: none;
 }
 .cv__frame { font-size: 0.4em; color: var(--select); text-transform: uppercase; letter-spacing: 0.14em; vertical-align: middle; }
 .cv__list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-@media (max-width: 760px) { .cv__list { grid-template-columns: 1fr; } }
+@media (max-width: 1100px) { .cv__list { grid-template-columns: 1fr; } }
 .job {
   --node: color-mix(in oklab, var(--coral) calc(var(--t) * 11.1%), var(--gold));
   position: relative; padding: 22px 22px 18px 50px; border-radius: 12px;
@@ -225,13 +225,10 @@ a { color: inherit; }
 .job__link { display: inline-block; margin-top: 8px; color: var(--mint); text-decoration: none; }
 .cv__more { margin-top: 56px; }
 .cv__more .big { color: var(--soft); margin-bottom: 8px; }
-.dance { position: relative; width: 100%; aspect-ratio: 5 / 2; max-height: 340px; }
-.dance canvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.8s; }
-.dance.gl-ready canvas { opacity: 1; }
-.dance__fallback { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0; }
-.dance.no-gl .dance__fallback { opacity: 1; }
+.dance { position: relative; margin: 0; width: 100%; max-height: 340px; }
+.dance img { width: 100%; height: auto; max-height: 340px; object-fit: contain; }
 .dance .hud--tl { top: 0; left: 0; }
-@media (max-width: 760px) { .dance { aspect-ratio: 3 / 2; } }
+@media (max-width: 760px) { .dance img { aspect-ratio: 3 / 2; } }
 @media (prefers-reduced-motion: reduce) { .job { opacity: 1; transform: none; } }
 
 /* ---------------------------------------------------------------- GitHub */
@@ -293,3 +290,19 @@ a { color: inherit; }
 .foot__links a:hover { color: var(--mint); }
 .foot__tech { flex-basis: 100%; }
 @media (max-width: 760px) { .contact { grid-template-columns: 1fr; } .contact__at { max-width: 260px; } }
+
+/* ---------------------------------------------------------------- live models (views.js) */
+.views { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 10; pointer-events: none; }
+.is-live img { visibility: hidden; }
+
+/* CV: the helix stands in a sticky column next to the list */
+.cv__body { display: grid; grid-template-columns: minmax(0, 1fr) clamp(220px, 24vw, 320px); gap: 24px; align-items: start; }
+.cv__side { position: sticky; top: 64px; order: 2; }
+.cv__side .cv__year { position: static; text-align: left; margin: 0 0 8px; }
+.frame--helix { padding: 10px; height: calc(100vh - 150px); max-height: 760px; }
+.frame--helix img { width: 100%; height: 100%; object-fit: contain; }
+@media (max-width: 860px) {
+  .cv__body { grid-template-columns: 1fr; }
+  .cv__side { position: relative; top: 0; order: 0; }
+  .frame--helix { height: 360px; }
+}

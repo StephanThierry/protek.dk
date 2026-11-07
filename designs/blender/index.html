@@ -77,9 +77,9 @@
         <figcaption class="mono">SVG · 9 polygoner</figcaption>
       </figure>
       <span class="origin__arrow mono" aria-hidden="true">extrude →</span>
-      <figure class="frame" data-tilt>
+      <figure class="frame" data-tilt data-model="star">
         <img src="renders/star.webp" alt="Proteks stjerne renderet i 3D med to lysende ringe" width="1600" height="1600" loading="lazy">
-        <figcaption class="mono">Cycles · 256 spp · 1600×1600</figcaption>
+        <figcaption class="mono">star.glb · 1 samlet mesh + 2 ringe</figcaption>
       </figure>
     </div>
   </section>
@@ -90,10 +90,13 @@
       <p class="kicker">CV · 1994 til i dag</p>
       <h2 class="big big--md">Fra 4GL Progress til ledelse og AI-agenter.</h2>
     </div>
-    <figure class="frame frame--wide reveal" data-tilt>
-      <img src="renders/helix.webp" alt="Dobbelt helix med ti lysende knuder" width="2000" height="1000" loading="lazy">
-    </figure>
-    <p class="cv__year mono" aria-hidden="true"><span class="cv__frame">Frame</span> <span data-year-out>1994</span></p>
+    <div class="cv__body">
+    <aside class="cv__side">
+      <p class="cv__year mono" aria-hidden="true"><span class="cv__frame">CV</span> <span data-year-out>1994</span></p>
+      <figure class="frame frame--helix" data-model="helix">
+        <img src="renders/helix.webp" alt="Dobbelt helix med ti lysende knuder, der roterer" width="2000" height="1000" loading="lazy">
+      </figure>
+    </aside>
     <ol class="cv__list">
       <li class="job" data-year="1994" style="--t:0">
         <p class="job__when">1994 – 2001</p>
@@ -189,21 +192,21 @@
         <p>AI-drevet udvikling og Harness Engineering: agent-baserede workflows, rammer og guardrails, der gør AI-agenter pålidelige i produktion.</p>
       </li>
     </ol>
+    </div>
     <div class="cv__more reveal">
       <p class="big big--sm">Mange flere projekter.</p>
-      <div class="dance" role="img" aria-label="Claude, OpenAI og Gemini danser">
-        <canvas id="dance" aria-hidden="true"></canvas>
-        <img class="dance__fallback" src="renders/dancers.webp" alt="" width="1600" height="640" loading="lazy">
-        <span class="hud hud--tl mono">dancers.glb · 4 s loop</span>
-      </div>
+      <figure class="dance" data-model="dancers">
+        <img src="renders/dancers.webp" alt="Claude, OpenAI og Gemini danser" width="1600" height="640" loading="lazy">
+        <figcaption class="hud hud--tl mono">dancers.glb · 4 s loop</figcaption>
+      </figure>
     </div>
   </section>
 
   <!-- 3 · GitHub -->
   <section class="sec split gh" id="github">
-    <figure class="frame reveal" data-tilt>
+    <figure class="frame reveal" data-tilt data-model="ghstar">
       <img src="renders/ghstar.webp" alt="Femtakket stjerne i guld" width="1400" height="1400" loading="lazy">
-      <figcaption class="mono">GhStar · guld, metallic 1.0</figcaption>
+      <figcaption class="mono">ghstar.glb · guld, metallic 1.0</figcaption>
     </figure>
     <div class="reveal">
       <p class="kicker">Open source · github.com/StephanThierry</p>
@@ -227,9 +230,9 @@
         <p class="kicker">Points of interest</p>
         <h2 class="big big--md">Interessante aktiviteter.</h2>
       </div>
-      <figure class="frame reveal" data-tilt>
+      <figure class="frame reveal" data-tilt data-model="knot">
         <img src="renders/knot.webp" alt="Iriserende torusknude" width="1400" height="1400" loading="lazy">
-        <figcaption class="mono">Knot (2,3) · thin film 420 nm</figcaption>
+        <figcaption class="mono">knot.glb · torusknude (2,3)</figcaption>
       </figure>
     </div>
     <div class="cards">
@@ -260,7 +263,7 @@
       <h2 class="big">Fra prompt<br>til print.</h2>
       <p>Alt 3D på denne side er lavet ved at lade Claude Code styre Blender gennem MCP-integrationen.</p>
     </div>
-    <figure class="frame frame--wide reveal" data-tilt>
+    <figure class="frame frame--wide reveal" data-tilt data-model="prism">
       <img src="renders/prism.webp" alt="Prisme, der deler en hvid stråle i fem farver" width="2000" height="1250" loading="lazy">
       <figcaption class="mono">Én prompt ind, fem trin ud</figcaption>
     </figure>
@@ -294,13 +297,13 @@
     </ol>
 
     <div class="print__figs">
-      <figure class="frame reveal" data-tilt>
+      <figure class="frame reveal" data-tilt data-model="layers">
         <img src="renders/layers.webp" alt="Stjernen skåret i otte lag, der er trukket fra hinanden" width="1600" height="1200" loading="lazy">
-        <figcaption class="mono">Slicer-visning · 8 lag · renderet i Blender</figcaption>
+        <figcaption class="mono">layers.glb · 8 lag</figcaption>
       </figure>
-      <figure class="frame reveal" data-tilt>
+      <figure class="frame reveal" data-tilt data-model="print">
         <img src="renders/print.webp" alt="Stjernen printet i mintgrøn PLA på en printplade" width="1600" height="1200" loading="lazy">
-        <figcaption class="mono">PLA på PEI-plade · laglinjer som bump</figcaption>
+        <figcaption class="mono">Printet PLA · laglinjer i shaderen</figcaption>
       </figure>
     </div>
 
@@ -314,7 +317,7 @@
           <div><dt>Overhæng over 45°</dt><dd>0,1 mm²</dd></div>
           <div><dt>Flad bund</dt><dd>920 mm²</dd></div>
         </dl>
-        <p class="readout__note">Målt i Blender på den samlede stjerne. Renderne af slicer-lagene og det printede emne er visualiseringer, ikke fotos.</p>
+        <p class="readout__note">Målt i Blender på den samlede stjerne. Slicer-lagene og det printede emne er visualiseringer, ikke fotos.</p>
       </div>
       <pre class="code reveal" aria-label="Uddrag af scene.py"><code><span class="c"># scene.py, kørt i Blender via MCP</span>
 <span class="k">def</span> <span class="f">star_top</span>(x, y):
@@ -331,7 +334,7 @@ build_all(); render_all(<span class="n">256</span>); check_print(<span class="n"
 
   <!-- 6 · Contact -->
   <section class="sec contact" id="kontakt">
-    <figure class="contact__at reveal" data-tilt>
+    <figure class="contact__at reveal" data-tilt data-model="at">
       <img src="renders/at.webp" alt="" width="1400" height="1400" loading="lazy">
     </figure>
     <div class="reveal">
@@ -346,7 +349,7 @@ build_all(); render_all(<span class="n">256</span>); check_print(<span class="n"
         <a href="https://www.facebook.com/stephan.thierry" target="_blank" rel="noopener">Facebook</a>
         <a href="/#designs">Alle designs</a>
       </span>
-      <span class="foot__tech mono">Alle 3D-elementer er modelleret og renderet i Blender 5.2 af Claude Code via MCP. Stjernen øverst er en GLB i three.js.</span>
+      <span class="foot__tech mono">Alle 3D-elementer er modelleret i Blender 5.2 af Claude Code via MCP og vises som GLB-modeller i three.js.</span>
     </footer>
   </section>
 
