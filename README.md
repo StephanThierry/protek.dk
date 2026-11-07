@@ -27,6 +27,4 @@ Deploy-målet ligger i `deploy.config.psd1`, som ikke er i git. Kopier `deploy.c
 
 Alle Vite-projekter bruger `base: './'`, så de virker i enhver undermappe. Lokal udvikling: `npm run dev` i den enkelte mappe.
 
-De gamle adresser `/newdesign/`, `/newdesign2/`, `/newdesign3/` og `/newdesign4/` omdirigerer til de nye.
-
 Skærmbillederne i showcasen ligger i `site/public/img/designs/` (1440×900, webp).

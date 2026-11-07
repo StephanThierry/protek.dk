@@ -2,7 +2,7 @@
 # Koer: powershell -NoProfile -File deploy.ps1
 # Maal og adresse laeses fra deploy.config.psd1 (ikke i git) - se deploy.config.example.psd1.
 # Roden spejles IKKE, for webmappen indeholder andre ting (apk, react, upload ...), som ikke bor i repoet.
-# Kun de mapper, sitet ejer (assets, designs, newdesign*), spejles; index.html og img kopieres ovenpaa.
+# Kun de mapper, sitet ejer (assets, designs), spejles; index.html og img kopieres ovenpaa.
 # Vite giver js/css hash-navne, saa Cloudflare-cache ikke giver gamle filer.
 $ErrorActionPreference = 'Stop'
 $cfgPath = Join-Path $PSScriptRoot 'deploy.config.psd1'
@@ -24,6 +24,6 @@ function Sync($from, $to, [switch]$Mirror) {
 
 Copy-Item "$src\index.html" "$dst\index.html" -Force
 Sync "$src\img" "$dst\img"
-foreach ($d in 'assets', 'designs', 'newdesign', 'newdesign2', 'newdesign3', 'newdesign4') { Sync "$src\$d" "$dst\$d" -Mirror }
+foreach ($d in 'assets', 'designs') { Sync "$src\$d" "$dst\$d" -Mirror }
 
 Write-Host "Publiceret til $dst  ->  $($cfg.PublicUrl)"

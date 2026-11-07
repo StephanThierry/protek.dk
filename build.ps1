@@ -42,13 +42,4 @@ foreach ($d in 'bauhaus', 'tidende', 'ebru') {
 Copy-Tree (Join-Path $root 'designs\plakat') "$out\designs\plakat"
 Copy-Tree (Join-Path $root 'designs\legacy') "$out\designs\legacy" @('less', 'files', 'maps')
 
-# Gamle adresser -> nye
-$moved = @{ 'newdesign' = '/'; 'newdesign2' = '/designs/bauhaus/'; 'newdesign3' = '/designs/tidende/'; 'newdesign4' = '/designs/ebru/' }
-foreach ($k in $moved.Keys) {
-  $to = $moved[$k]
-  New-Item -ItemType Directory "$out\$k" -Force | Out-Null
-  $html = "<!doctype html><meta charset=`"utf-8`"><title>Flyttet</title><meta http-equiv=`"refresh`" content=`"0; url=$to`"><link rel=`"canonical`" href=`"https://protek.dk$to`"><script>location.replace('$to'+location.hash)</script><a href=`"$to`">protek.dk$to</a>"
-  [IO.File]::WriteAllText("$out\$k\index.html", $html, (New-Object Text.UTF8Encoding($false)))
-}
-
 Write-Host "Bygget til $out"
