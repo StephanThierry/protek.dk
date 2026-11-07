@@ -208,7 +208,11 @@ a { color: inherit; }
   content: ''; position: absolute; left: 20px; top: 28px; width: 12px; height: 12px; border-radius: 50%;
   background: var(--node); box-shadow: 0 0 14px var(--node);
 }
-.job--now { --node: var(--mint); }
+.job--now {
+  --node: var(--mint);
+  background: color-mix(in oklab, var(--mint) 7%, var(--panel));
+  border-color: color-mix(in oklab, var(--mint) 28%, var(--line));
+}
 .job__when { margin: 0; font-family: var(--mono); font-size: 0.75rem; color: var(--node); display: flex; align-items: center; gap: 8px; }
 .live { width: 7px; height: 7px; border-radius: 50%; background: var(--mint); animation: pulse 1.8s infinite; }
 @keyframes pulse { 50% { opacity: 0.25; } }
@@ -219,7 +223,15 @@ a { color: inherit; }
 .job p { font-size: 0.95rem; }
 .job__note, .job__link { font-size: 0.85rem; color: var(--dim); }
 .job__link { display: inline-block; margin-top: 8px; color: var(--mint); text-decoration: none; }
-.cv__more { margin-top: 48px; color: var(--soft); }
+.cv__more { margin-top: 56px; }
+.cv__more .big { color: var(--soft); margin-bottom: 8px; }
+.dance { position: relative; width: 100%; aspect-ratio: 5 / 2; max-height: 340px; }
+.dance canvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.8s; }
+.dance.gl-ready canvas { opacity: 1; }
+.dance__fallback { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0; }
+.dance.no-gl .dance__fallback { opacity: 1; }
+.dance .hud--tl { top: 0; left: 0; }
+@media (max-width: 760px) { .dance { aspect-ratio: 3 / 2; } }
 @media (prefers-reduced-motion: reduce) { .job { opacity: 1; transform: none; } }
 
 /* ---------------------------------------------------------------- GitHub */

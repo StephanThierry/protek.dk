@@ -121,6 +121,81 @@ $$('[data-years-since]').forEach((el) => {
   requestAnimationFrame(frame);
 })();
 
+// ---------------------------------------------------------------- the three AI dancers (animated GLB from Blender)
+
+(function dancers() {
+  const box = $('.dance');
+  const canvas = $('#dance');
+  if (!box || !canvas) return;
+  let started = false;
+
+  const start = () => {
+    started = true;
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    } catch (e) {
+      box.classList.add('no-gl');
+      return;
+    }
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.toneMapping = THREE.NeutralToneMapping; // keeps the brand colours true
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    const scene = new THREE.Scene();
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    scene.environmentIntensity = 0.35;
+    const key = new THREE.DirectionalLight(0xfff4e8, 2.4);
+    key.position.set(-3, 4, 6);
+    const rim = new THREE.DirectionalLight(0x9fddf7, 1.6);
+    rim.position.set(4, 2, -5);
+    scene.add(key, rim);
+    const camera = new THREE.PerspectiveCamera(30, 2.5, 0.1, 100);
+    camera.position.set(0, 0.5, 8.5);
+    camera.lookAt(0, 0.2, 0);
+
+    let mixer = null;
+    new GLTFLoader().load('models/dancers.glb', (gltf) => {
+      scene.add(gltf.scene);
+      mixer = new THREE.AnimationMixer(gltf.scene);
+      gltf.animations.forEach((clip) => mixer.clipAction(clip).play());
+      if (reduced) mixer.setTime(9 / 24); // a still pose, no dancing
+      box.classList.add('gl-ready');
+    }, undefined, (e) => {
+      console.warn('dancers.glb failed to load, showing the render instead:', e);
+      box.classList.add('no-gl');
+    });
+
+    const resize = () => {
+      const r = box.getBoundingClientRect();
+      renderer.setSize(r.width, r.height, false);
+      camera.aspect = r.width / r.height;
+      // keep all three in frame on narrow screens
+      camera.position.z = camera.aspect < 2.5 ? 8.5 * 2.5 / camera.aspect : 8.5;
+      camera.updateProjectionMatrix();
+    };
+    new ResizeObserver(resize).observe(box);
+    resize();
+
+    let visible = true;
+    new IntersectionObserver(([en]) => { visible = en.isIntersecting; }).observe(box);
+    const timer = new THREE.Timer();
+    (function frame() {
+      requestAnimationFrame(frame);
+      timer.update();
+      const dt = timer.getDelta();
+      if (!visible) return;
+      if (mixer && !reduced) mixer.update(dt);
+      renderer.render(scene, camera);
+    })();
+  };
+
+  // Only spin up the second WebGL context when the block comes close.
+  new IntersectionObserver(([en], obs) => {
+    if (en.isIntersecting && !started) { obs.disconnect(); start(); }
+  }, { rootMargin: '400px 0px' }).observe(box);
+})();
+
 // ---------------------------------------------------------------- reveal on scroll
 
 const io = new IntersectionObserver((entries) => {

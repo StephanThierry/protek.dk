@@ -89,11 +89,9 @@
     <div class="cv__head reveal">
       <p class="kicker">CV · 1994 til i dag</p>
       <h2 class="big big--md">Fra 4GL Progress til ledelse og AI-agenter.</h2>
-      <p class="soft">Ti arbejdspladser, ti knuder på helixen.</p>
     </div>
     <figure class="frame frame--wide reveal" data-tilt>
       <img src="renders/helix.webp" alt="Dobbelt helix med ti lysende knuder" width="2000" height="1000" loading="lazy">
-      <figcaption class="mono">Helix · 2 strenge · 22 trin · 10 knuder</figcaption>
     </figure>
     <p class="cv__year mono" aria-hidden="true"><span class="cv__frame">Frame</span> <span data-year-out>1994</span></p>
     <ol class="cv__list">
@@ -191,7 +189,14 @@
         <p>AI-drevet udvikling og Harness Engineering: agent-baserede workflows, rammer og guardrails, der gør AI-agenter pålidelige i produktion.</p>
       </li>
     </ol>
-    <p class="big big--sm cv__more reveal">Mange flere projekter.</p>
+    <div class="cv__more reveal">
+      <p class="big big--sm">Mange flere projekter.</p>
+      <div class="dance" role="img" aria-label="Claude, OpenAI og Gemini danser">
+        <canvas id="dance" aria-hidden="true"></canvas>
+        <img class="dance__fallback" src="renders/dancers.webp" alt="" width="1600" height="640" loading="lazy">
+        <span class="hud hud--tl mono">dancers.glb · 4 s loop</span>
+      </div>
+    </div>
   </section>
 
   <!-- 3 · GitHub -->
@@ -221,7 +226,6 @@
       <div class="reveal">
         <p class="kicker">Points of interest</p>
         <h2 class="big big--md">Interessante aktiviteter.</h2>
-        <p class="soft">En torusknude: alt hænger sammen. Overfladen er en tynd film, der skifter farve med vinklen.</p>
       </div>
       <figure class="frame reveal" data-tilt>
         <img src="renders/knot.webp" alt="Iriserende torusknude" width="1400" height="1400" loading="lazy">
@@ -254,7 +258,7 @@
     <div class="print__head reveal">
       <p class="kicker">3D-print · Blender MCP + Claude Code</p>
       <h2 class="big">Fra prompt<br>til print.</h2>
-      <p>Alt 3D på denne side er lavet ved at lade Claude Code styre Blender gennem MCP-integrationen. Den samme arbejdsgang kan føre et emne helt frem til en printbar fil. Her er stjernen brugt som eksempel.</p>
+      <p>Alt 3D på denne side er lavet ved at lade Claude Code styre Blender gennem MCP-integrationen.</p>
     </div>
     <figure class="frame frame--wide reveal" data-tilt>
       <img src="renders/prism.webp" alt="Prisme, der deler en hvid stråle i fem farver" width="2000" height="1250" loading="lazy">
@@ -331,8 +335,7 @@ build_all(); render_all(<span class="n">256</span>); check_print(<span class="n"
       <img src="renders/at.webp" alt="" width="1400" height="1400" loading="lazy">
     </figure>
     <div class="reveal">
-      <p class="kicker">Kontakt</p>
-      <h2 class="big">Skriv en linje.</h2>
+      <h2 class="big">Kontakt</h2>
       <a class="btn btn--big" href="mailto:stephan@protek.dk">stephan@protek.dk</a>
     </div>
     <footer class="foot">

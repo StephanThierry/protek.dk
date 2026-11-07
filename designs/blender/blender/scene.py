@@ -558,6 +558,7 @@ def build_all():
     build_at()
     build_print_bed()
     build_print_layers()
+    build_dancers()
     return [c.name for c in bpy.data.collections]
 
 
@@ -587,30 +588,16 @@ def render_all(samples=256):
     return [render_one(k, samples) for k in SHOTS]
 
 
-def export_star_glb():
-    """Export the star (shards, core, rings) as GLB for the live Three.js hero."""
-    show_only('Star')
-    bpy.ops.object.select_all(action='DESELECT')
-    for o in bpy.data.collections['Star'].objects:
-        o.select_set(True)
-    os.makedirs(OUT_MODELS, exist_ok=True)
-    path = os.path.join(OUT_MODELS, 'star.glb')
-    bpy.ops.export_scene.gltf(filepath=path, export_format='GLB', use_selection=True,
-                              export_apply=True, export_yup=True, export_draco_mesh_compression_enable=False)
-    return path
-
-
-def check_print(target_mm=80.0):
-    """Printability check of the star, as quoted on the page.
-    Unions the evaluated shards + core (exact boolean), then measures at target_mm across:
-    non-manifold edges, size, volume, downward-facing area steeper than 45 deg (overhang) and the flat base."""
-    import bmesh as _bm
+def union_star(include_core=True, name='Star_union'):
+    """Merge the evaluated shards (+ core) into one closed mesh with an exact boolean union.
+    Used for the print check and for the live GLB: overlapping shards z-fight in real time."""
     dg = bpy.context.evaluated_depsgraph_get()
-    src = [o for o in bpy.data.collections['Star'].objects if 'shard' in o.name or o.name == 'Star_core']
+    src = [o for o in bpy.data.collections['Star'].objects
+           if 'shard' in o.name or (include_core and o.name == 'Star_core')]
     copies = []
     for o in src:
         me = bpy.data.meshes.new_from_object(o.evaluated_get(dg))
-        c = bpy.data.objects.new('chk_' + o.name, me)
+        c = bpy.data.objects.new('tmp_' + o.name, me)
         c.matrix_world = o.matrix_world.copy()
         bpy.context.scene.collection.objects.link(c)
         copies.append(c)
@@ -618,9 +605,41 @@ def check_print(target_mm=80.0):
     for c in copies[1:]:
         m = base.modifiers.new('U', 'BOOLEAN')
         m.operation, m.solver, m.object = 'UNION', 'EXACT', c
+        m.material_mode = 'TRANSFER'
         with bpy.context.temp_override(object=base, active_object=base):
             bpy.ops.object.modifier_apply(modifier=m.name)
-    bm = _bm.new()
+    for c in copies[1:]:
+        bpy.data.objects.remove(c, do_unlink=True)
+    base.name = name
+    return base
+
+
+def export_star_glb():
+    """Export the star for the live Three.js hero: one merged mesh (no core sphere) + the two rings."""
+    show_only('Star')
+    u = union_star(include_core=False)
+    # flat facets: smooth shading blends the neighbouring shard tops into smudged highlights
+    for poly in u.data.polygons:
+        poly.use_smooth = False
+    bpy.ops.object.select_all(action='DESELECT')
+    u.select_set(True)
+    for o in bpy.data.collections['Star'].objects:
+        if 'ring' in o.name:
+            o.select_set(True)
+    os.makedirs(OUT_MODELS, exist_ok=True)
+    path = os.path.join(OUT_MODELS, 'star.glb')
+    bpy.ops.export_scene.gltf(filepath=path, export_format='GLB', use_selection=True,
+                              export_apply=True, export_yup=True, export_animations=False)
+    bpy.data.objects.remove(u, do_unlink=True)
+    return path
+
+
+def check_print(target_mm=80.0):
+    """Printability check of the star, as quoted on the page.
+    Measures the merged star at target_mm across: non-manifold edges, size, volume,
+    downward-facing area steeper than 45 deg (overhang) and the flat base."""
+    base = union_star(include_core=True, name='Star_check')
+    bm = bmesh.new()
     bm.from_mesh(base.data)
     dims = base.dimensions.copy()
     k = target_mm / max(dims.x, dims.y)
@@ -634,6 +653,215 @@ def check_print(target_mm=80.0):
                               if f.normal.z < -0.999 and f.calc_center_median().z <= 0.01) * k * k, 1),
     }
     bm.free()
-    for c in copies:
-        bpy.data.objects.remove(c, do_unlink=True)
+    bpy.data.objects.remove(base, do_unlink=True)
     return res
+
+
+# ---------------------------------------------------------------- the three AI dancers
+
+DANCE_FRAMES = 96   # 4 s loop at 24 fps
+DANCE_U = 0.045     # world units per SVG unit
+
+
+def box(name, x0, y0, x1, y1, depth, c, material, pivot, parent=None):
+    """Block from SVG rect coords (y down), centred in depth, with its origin at `pivot` (SVG coords).
+    With a parent, the block is placed relative to the body centre (32, 22)."""
+    u = DANCE_U
+    px, py = pivot
+    X0, X1 = (x0 - px) * u, (x1 - px) * u
+    Z0, Z1 = -(y1 - py) * u, -(y0 - py) * u
+    d = depth * u / 2
+    v = [(X0, -d, Z0), (X1, -d, Z0), (X1, d, Z0), (X0, d, Z0),
+         (X0, -d, Z1), (X1, -d, Z1), (X1, d, Z1), (X0, d, Z1)]
+    f = [(0, 3, 2, 1), (4, 5, 6, 7), (0, 1, 5, 4), (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7)]
+    o = mesh_obj(name, v, f, c, material)
+    bevel(o, 0.012, 2)
+    if parent:
+        o.parent = parent
+        o.location = ((px - 32) * u, 0, -(py - 22) * u)
+    return o
+
+
+def key(o, frame, loc=None, rot=None, scale=None):
+    if loc is not None:
+        o.location = loc
+        o.keyframe_insert('location', frame=frame)
+    if rot is not None:
+        o.rotation_euler = [math.radians(a) for a in rot]
+        o.keyframe_insert('rotation_euler', frame=frame)
+    if scale is not None:
+        o.scale = (scale,) * 3 if isinstance(scale, (int, float)) else scale
+        o.keyframe_insert('scale', frame=frame)
+
+
+def build_claude(c, x):
+    """The pixel Claude from the site's SVG (64x44 grid) as blocks, with a 4 s dance:
+    groove with bounce and sway, arms waving, legs stepping, then a hop with a full spin."""
+    orange = mat('ClaudeOrange', '#D97757', 0.0, 0.45, 0.2)
+    dark = mat('ClaudeEyes', '#1A0F0B', 0.0, 0.3)
+    root = bpy.data.objects.new('Claude', None)
+    c.objects.link(root)
+    body = box('Claude_body', 10, 5, 54, 30, 18, c, orange, (32, 22))
+    body.parent = root
+    for ex in (20, 39):
+        box(f'Claude_eye{ex}', ex, 12, ex + 5, 21, 19, c, dark, (32, 22)).parent = body
+    arm_l = box('Claude_arm_l', 3, 14, 12, 21, 8, c, orange, (12, 17), body)
+    arm_r = box('Claude_arm_r', 52, 14, 61, 21, 8, c, orange, (52, 17), body)
+    legs = [box(f'Claude_leg{i}', lx, 29, lx + 5, 38, 6, c, orange, (lx + 2.5, 29), body)
+            for i, lx in enumerate((14, 22, 37, 45))]
+    leg_z = legs[0].location.z
+    root.location = (x, 0, 0)
+
+    F = DANCE_FRAMES
+    # groove (0..48): bounce on every beat, sway and twist side to side
+    for f in range(0, 49, 6):
+        side = (f // 6) % 2
+        key(root, f, loc=(x + (0.12 if side else -0.12), 0, 0.0 if f % 12 == 0 else 0.18),
+            rot=(0, 0, 14 if side else -14))
+    # hop with a full spin (48..80), land, settle back into the groove pose (96 == 0)
+    key(root, 60, loc=(x, 0, 0.75), rot=(0, 0, 166))
+    key(root, 72, loc=(x, 0, 0.75), rot=(0, 0, 346))
+    key(root, 80, loc=(x, 0, -0.04), rot=(0, 0, 346))
+    key(root, 88, loc=(x, 0, 0.12), rot=(0, 0, 346))
+    key(root, F, loc=(x - 0.12, 0, 0.0), rot=(0, 0, 346))
+    # squash on landing
+    for f, s in ((0, (1, 1, 1)), (78, (1, 1, 1)), (80, (1.12, 1.12, 0.84)), (86, (1, 1, 1)), (F, (1, 1, 1))):
+        key(body, f, scale=s)
+    # arms wave in opposition (rotation around the depth axis, Y); up during the spin
+    for f in range(0, F + 1, 6):
+        up = (f // 6) % 2 == 0
+        if 54 <= f <= 78:
+            key(arm_l, f, rot=(0, 55, 0)); key(arm_r, f, rot=(0, -55, 0))
+        else:
+            key(arm_l, f, rot=(0, 35 if up else -20, 0)); key(arm_r, f, rot=(0, 20 if up else -35, 0))
+    # legs step alternately
+    for f in range(0, F + 1, 6):
+        a = (f // 6) % 2 == 0
+        for i, lg in enumerate(legs):
+            lift = 0.13 if ((i % 2 == 0) == a and not 54 <= f <= 78) else 0.0
+            key(lg, f, loc=(lg.location.x, 0, leg_z + lift))
+    return root
+
+
+def build_openai(c, x, img_path):
+    """A coin carrying the OpenAI mark (texture from openai.jpg) that hops and flips on the beat."""
+    m = mat('OpenAICoin', '#FFFFFF', 0.0, 0.35, 0.6)
+    nt = m.node_tree
+    tex = nt.nodes.new('ShaderNodeTexImage')
+    tex.image = bpy.data.images.load(img_path, check_existing=True)
+    nt.links.new(tex.outputs['Color'], nt.nodes['Principled BSDF'].inputs['Base Color'])
+    rim = mat('OpenAIRim', '#E9F0EE', 1.0, 0.25)
+    bpy.ops.mesh.primitive_cylinder_add(vertices=96, radius=0.95, depth=0.14, location=(0, 0, 0))
+    coin = bpy.context.active_object
+    coin.name = 'OpenAI'
+    coin.rotation_euler = (math.radians(90), 0, 0)
+    bpy.ops.object.transform_apply(rotation=True)
+    me = coin.data
+    me.materials.append(rim)
+    me.materials.append(m)
+    # the caps get the logo (flat projection, back mirrored so it reads correctly), the side is metal
+    uv = me.uv_layers.active or me.uv_layers.new()
+    for p in me.polygons:
+        cap = abs(p.normal.y) > 0.9
+        p.material_index = 1 if cap else 0
+        sx = -1 if p.normal.y > 0 else 1
+        for li in p.loop_indices:
+            co = me.vertices[me.loops[li].vertex_index].co
+            uv.data[li].uv = (0.5 + sx * co.x / 1.9 * 0.86, 0.5 + co.z / 1.9 * 0.86) if cap else (0.0, 0.0)
+    bevel(coin, 0.02, 2, harden=False)
+    link(coin, c)
+    F = DANCE_FRAMES
+    # little hops while rocking (0..48), a big double flip with Claude's spin, land with a squash
+    for f in range(0, 49, 12):
+        key(coin, f, loc=(x, 0, 0), rot=(0, 0, (f / 48) * 60 - 30), scale=(1, 1, 1))
+        if f < 48:
+            key(coin, f + 6, loc=(x, 0, 0.25), rot=(0, 0, (f + 6) / 48 * 60 - 30), scale=(0.96, 0.96, 1.05))
+    key(coin, 66, loc=(x, 0, 0.9), rot=(360, 0, 30))
+    key(coin, 80, loc=(x, 0, 0), rot=(720, 0, 30), scale=(1, 1, 1))
+    key(coin, 84, loc=(x, 0, 0), rot=(720, 0, 30), scale=(1.06, 1.06, 0.92))
+    key(coin, F, loc=(x, 0, 0), rot=(720, 0, -30), scale=(1, 1, 1))
+    return coin
+
+
+GEMINI_PATH = [  # the sparkle from the site's SVG (viewBox 64): tip, ctrl1, ctrl2, next tip
+    ((32, 6), (33.5, 21), (43, 30.5), (58, 32)),
+    ((58, 32), (43, 33.5), (33.5, 43), (32, 58)),
+    ((32, 58), (30.5, 43), (21, 33.5), (6, 32)),
+    ((6, 32), (21, 30.5), (30.5, 21), (32, 6)),
+]
+
+
+def build_gemini(c, x):
+    """The Gemini sparkle extruded, with its blue -> violet -> rose gradient as vertex colours."""
+    u = 0.045
+    pts = []
+    for p0, c1, c2, p1 in GEMINI_PATH:
+        for i in range(24):
+            t = i / 24
+            q = [(1 - t) ** 3 * p0[k] + 3 * (1 - t) ** 2 * t * c1[k] + 3 * (1 - t) * t * t * c2[k] + t ** 3 * p1[k]
+                 for k in (0, 1)]
+            pts.append(((q[0] - 32) * u, -(q[1] - 32) * u))
+    n = len(pts)
+    d = 0.12
+    verts = [(px, -d, pz) for px, pz in pts] + [(px, d, pz) for px, pz in pts] + [(0, -d - 0.14, 0), (0, d + 0.14, 0)]
+    fc, bc = 2 * n, 2 * n + 1
+    faces = []
+    for i in range(n):
+        j = (i + 1) % n
+        faces.append((j, i, fc))            # front, domed toward the centre
+        faces.append((n + i, n + j, bc))    # back
+        faces.append((i, j, n + j, n + i))  # side
+    g = mesh_obj('Gemini', verts, faces, c, None)
+    me = g.data
+    ca = me.color_attributes.new('Col', 'FLOAT_COLOR', 'POINT')
+    c0, c1_, c2_ = lin('#4285F4'), lin('#9B72CB'), lin('#D96570')
+    for vi, v in enumerate(me.vertices):
+        t = max(0.0, min(1.0, (v.co.x + v.co.z) / (2 * 26 * u) + 0.5))  # bottom-left -> top-right
+        a, b, tt = (c0, c1_, t / 0.55) if t < 0.55 else (c1_, c2_, (t - 0.55) / 0.45)
+        ca.data[vi].color = tuple(a[k] + (b[k] - a[k]) * tt for k in range(3)) + (1.0,)
+    m = mat('GeminiGrad', '#FFFFFF', 0.0, 0.25, 0.8)
+    nt = m.node_tree
+    an = nt.nodes.new('ShaderNodeVertexColor')
+    an.layer_name = 'Col'
+    nt.links.new(an.outputs['Color'], nt.nodes['Principled BSDF'].inputs['Base Color'])
+    me.materials.append(m)
+    me.validate()
+    F = DANCE_FRAMES
+    # twinkle: pulse on the beat while turning slowly; a flip with Claude's spin
+    for f in range(0, 49, 6):
+        big = (f // 6) % 2 == 0
+        key(g, f, loc=(x, 0, 0.05 if big else 0), rot=(0, f * 1.5, 0), scale=1.0 if big else 0.82)
+    key(g, 66, loc=(x, 0, 0.45), rot=(0, 162, 180), scale=1.15)
+    key(g, 80, loc=(x, 0, 0), rot=(0, 144, 360), scale=0.9)
+    key(g, F, loc=(x, 0, 0.05), rot=(0, 144, 360), scale=1.0)
+    return g
+
+
+def build_dancers():
+    c = coll('Dancers')
+    scn = bpy.context.scene
+    scn.frame_start, scn.frame_end = 0, DANCE_FRAMES
+    scn.render.fps = 24
+    build_claude(c, -3.0)
+    build_openai(c, 0.0, os.path.join(ROOT, 'blender', 'openai.jpg'))
+    build_gemini(c, 3.0)
+    scn.frame_set(0)
+    return [o.name for o in c.objects]
+
+
+def export_dancers_glb():
+    """All three dancers in one GLB with a single 4 s animation clip."""
+    show_only('Dancers')
+    bpy.ops.object.select_all(action='DESELECT')
+    for o in bpy.data.collections['Dancers'].objects:
+        o.select_set(True)
+    os.makedirs(OUT_MODELS, exist_ok=True)
+    path = os.path.join(OUT_MODELS, 'dancers.glb')
+    bpy.ops.export_scene.gltf(filepath=path, export_format='GLB', use_selection=True, export_apply=True,
+                              export_yup=True, export_animations=True, export_animation_mode='SCENE',
+                              export_frame_range=True, export_force_sampling=True,
+                              export_image_format='WEBP')
+    return path
+
+
+SHOTS['dancers'] = ('Dancers', (0, -12, 1.2), (0, 0, 0.3), 38, (1600, 640))
