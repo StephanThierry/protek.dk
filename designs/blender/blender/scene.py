@@ -470,20 +470,87 @@ def build_prism():
                          mat(f'Ray{i}', col, emission=col, strength=2.2), r2=0.11)
 
 
-def build_at():
-    """@ for contact: extruded glyph in tinted chrome."""
-    c = coll('At')
-    cu = bpy.data.curves.new('At', 'FONT')
-    cu.body = '@'
-    cu.size = 4.2
-    cu.extrude = 0.22
-    cu.bevel_depth = 0.04
-    cu.bevel_resolution = 3
-    cu.align_x = 'CENTER'
-    cu.align_y = 'CENTER'
-    o = bpy.data.objects.new('At', cu)
-    c.objects.link(o)
-    cu.materials.append(mat('Chrome', '#A9D8E6', 1.0, 0.1, 0.4))
+# Speech bubble outline, standing upright (x across, z up), flat on the bed so it prints without support:
+# the tail runs from the left edge (z = tail_z) down to the bed at x = tail_tip (60 deg, no overhang).
+# Mirrored in src/views.js (bubbleSpan) for the nozzle path.
+BUBBLE = dict(w=3.2, z1=2.2, r=0.55, tail_z=0.9, tail_tip=-2.15, tail_base=-1.0, depth=0.5)
+
+
+def bubble_outline(seg=10):
+    w, z1, r = BUBBLE['w'], BUBBLE['z1'], BUBBLE['r']
+    hx = w / 2
+    pts = []
+
+    def arc(cx, cz, a0, a1):
+        for i in range(seg + 1):
+            a = a0 + (a1 - a0) * i / seg
+            pts.append((cx + math.cos(a) * r, cz + math.sin(a) * r))
+
+    # counter-clockwise from the bottom edge where the tail starts
+    pts.append((BUBBLE['tail_base'], 0.0))
+    arc(hx - r, r, -math.pi / 2, 0)
+    arc(hx - r, z1 - r, 0, math.pi / 2)
+    arc(-hx + r, z1 - r, math.pi / 2, math.pi)
+    pts.append((-hx, BUBBLE['tail_z']))
+    pts.append((BUBBLE['tail_tip'], 0.0))
+    return pts
+
+
+def build_contact():
+    """Contact: a speech bubble with '...' that the page 3D-prints live, plus the hotend and the print bed."""
+    c = coll('Contact')
+    pla = pla_mat('PLA_contact', PAL['mint'])
+    d = BUBBLE['depth']
+    o = prism_from_poly('Bubble', bubble_outline(), lambda x, y: d / 2, -d / 2, c, pla)
+    bevel(o, 0.03, 2)
+    o.rotation_euler = (math.radians(90), 0, 0)   # stand it up: outline in XZ, depth along Y
+    # the typing dots, pressed out of the front face
+    dot_m = mat('Dot', PAL['deep'], 0.0, 0.35, 0.3)
+    zc = BUBBLE['z1'] / 2 + 0.1
+    for i, x in enumerate((-0.75, 0.0, 0.75)):
+        bpy.ops.mesh.primitive_cylinder_add(vertices=48, radius=0.22, depth=0.12, location=(x, -d / 2 - 0.04, zc),
+                                            rotation=(math.radians(90), 0, 0))
+        dot = bpy.context.active_object
+        dot.name = f'Dot{i}'
+        dot.data.materials.append(dot_m)
+        bevel(dot, 0.03, 3)
+        link(dot, c)
+    # hotend: aluminium heater block + brass nozzle, origin at the nozzle tip
+    hot = bpy.data.objects.new('Nozzle', None)
+    c.objects.link(hot)
+    hot.location = (0.6, 0, BUBBLE['z1'] + 0.9)
+    alu = mat('Alu', '#B8C2C8', 1.0, 0.32)
+    brass = mat('Brass', '#C9A24A', 1.0, 0.25)
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0.42))
+    blk = bpy.context.active_object
+    blk.name = 'Nozzle_block'
+    blk.scale = (0.62, 0.42, 0.34)
+    bpy.ops.object.transform_apply(scale=True)
+    blk.data.materials.append(alu)
+    bevel(blk, 0.03, 2)
+    link(blk, c)
+    blk.parent = hot
+    bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=0.09, depth=0.5, location=(0, 0, 0.85))
+    tube = bpy.context.active_object
+    tube.name = 'Nozzle_tube'
+    tube.data.materials.append(alu)
+    link(tube, c)
+    tube.parent = hot
+    bpy.ops.mesh.primitive_cone_add(vertices=32, radius1=0.03, radius2=0.14, depth=0.25, location=(0, 0, 0.125))
+    tip = bpy.context.active_object
+    tip.name = 'Nozzle_tip'
+    tip.data.materials.append(brass)
+    link(tip, c)
+    tip.parent = hot
+    # print bed
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, -0.04))
+    bed = bpy.context.active_object
+    bed.name = 'Bed'
+    bed.scale = (4.6, 1.8, 0.08)
+    bpy.ops.object.transform_apply(scale=True)
+    bed.data.materials.append(mat('PEI_flat', '#20262A', 0.5, 0.6))
+    bevel(bed, 0.02, 2)
+    link(bed, c)
 
 
 def build_print_bed():
@@ -540,7 +607,7 @@ SHOTS = {
     'ghstar':  ('GhStar',      (1.5, -5.2, 5.4),  (0, 0, 0),    55, (1400, 1400)),
     'knot':    ('Knot',        (0, -8.5, 6.5),    (0, 0, 0),    50, (1400, 1400)),
     'prism':   ('Prism',       (0.5, -3.4, 11.5), (0.5, -0.7, 0), 45, (2000, 1250)),
-    'at':      ('At',          (1.2, -6.0, 8.0),  (0, 0, 0),    55, (1400, 1400)),
+    'contact': ('Contact',     (2.6, -8.5, 4.2),  (0, 0, 1.5),  45, (1400, 1400)),
     'print':   ('PrintBed',    (3.5, -8.0, 5.6),  (0, 0, 0.0),  45, (1600, 1200)),
     'layers':  ('PrintLayers', (4.0, -8.0, 6.2),  (0, 0, 1.0),  50, (1600, 1200)),
 }
@@ -556,7 +623,7 @@ def build_all():
     build_ghstar()
     build_knot()
     build_prism()
-    build_at()
+    build_contact()
     build_print_bed()
     build_print_layers()
     build_dancers()
@@ -915,11 +982,11 @@ def _join(objs, name):
 
 
 def export_element_glbs():
-    """helix, ghstar, knot, prism, at and layers (one node per layer). The printed star reuses star.glb."""
+    """helix, ghstar, knot, prism, contact and layers (one node per layer). The printed star reuses star.glb."""
     for c in bpy.context.scene.collection.children:
         c.hide_viewport = False
     out = {}
-    for key_, cname in (('helix', 'Helix'), ('ghstar', 'GhStar'), ('knot', 'Knot'), ('prism', 'Prism'), ('at', 'At')):
+    for key_, cname in (('helix', 'Helix'), ('ghstar', 'GhStar'), ('knot', 'Knot'), ('prism', 'Prism'), ('contact', 'Contact')):
         out[key_] = _export(list(bpy.data.collections[cname].objects), f'{key_}.glb')
     # slicer view: one node per layer (named L0..), so the page can pull them apart and together
     layers = {}
