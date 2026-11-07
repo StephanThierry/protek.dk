@@ -51,9 +51,9 @@ const DEFS = {
     tick: (v, t) => { v.pivot.rotation.y = t * 0.25; },
   },
   helix: {
-    url: 'models/helix.glb', dir: [0, 0.12, 1], fill: 0.98,
-    setup: (m) => { m.rotation.z = Math.PI / 2; helixGradient(m); },   // stand it up along Y
-    tick: (v, t) => { v.pivot.rotation.y = t * 0.6; },                  // spins around its own axis (Y)
+    url: 'models/helix.glb', dir: [0, 0.12, 1], fill: 0.92, fitLong: true,
+    setup: (m) => { helixGradient(m); },
+    tick: (v, t) => { v.pivot.rotation.x = t * 0.6; },   // lies along X and spins around it
   },
   ghstar: {
     url: 'models/ghstar.glb', dir: [0, 0.15, 1], fill: 0.9,
@@ -190,6 +190,7 @@ export function initViews() {
       holder.add(m);
       pivot.add(holder);
       v.radius = box.getBoundingSphere(new THREE.Sphere()).radius;
+      v.size = box.getSize(new THREE.Vector3());
       v.ready = true;
       frame.classList.add('is-live');
     }, undefined, (e) => console.warn(`${def.url} failed, keeping the render:`, e));
@@ -230,7 +231,13 @@ export function initViews() {
       const half = THREE.MathUtils.degToRad(v.camera.fov / 2);
       const fitH = v.radius / Math.sin(half);
       const fitW = v.radius / Math.sin(Math.atan(Math.tan(half) * aspect));
-      dir.fromArray(v.def.dir).normalize().multiplyScalar(Math.max(fitH, fitW) / v.def.fill);
+      let dist = Math.max(fitH, fitW) / v.def.fill;
+      if (v.def.fitLong) {
+        // long object spinning around X: fit its length to the width, its spin radius to the height
+        const rr = Math.hypot(v.size.y, v.size.z) / 2;
+        dist = Math.max((v.size.x / 2) / (Math.tan(half) * aspect), rr / Math.tan(half)) / v.def.fill + rr;
+      }
+      dir.fromArray(v.def.dir).normalize().multiplyScalar(dist);
       v.camera.position.copy(dir);
       v.camera.lookAt(0, 0, 0);
       v.camera.updateProjectionMatrix();
