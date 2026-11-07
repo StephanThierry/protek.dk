@@ -2,7 +2,6 @@
 # Run: powershell -NoProfile -File build.ps1
 #   dist\                 front page (the particle design, site\)
 #   dist\designs\<name>\  the other designs (Vite builds and static sites)
-#   dist\blender\         the Blender design (designs\blender), not in the showcase yet
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
 $out = Join-Path $root 'dist'
@@ -32,15 +31,11 @@ Build-Vite (Join-Path $root 'site')
 Copy-Tree (Join-Path $root 'site\dist') $out
 
 # Vite designs
-foreach ($d in 'bauhaus', 'tidende', 'ebru') {
+foreach ($d in 'bauhaus', 'tidende', 'ebru', 'blender') {
   $src = Join-Path $root "designs\$d"
   Build-Vite $src
   Copy-Tree "$src\dist" "$out\designs\$d"
 }
-
-# Blender design: lives at /blender, not in the showcase yet
-Build-Vite (Join-Path $root 'designs\blender')
-Copy-Tree (Join-Path $root 'designs\blender\dist') "$out\blender"
 
 # Static designs
 Copy-Tree (Join-Path $root 'designs\plakat') "$out\designs\plakat"
