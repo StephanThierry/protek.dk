@@ -20,8 +20,10 @@ De fem AI-designs er lavet med AI på 2 timer til sammen; legacy-sitet tog en he
 
 ```powershell
 powershell -NoProfile -File build.ps1    # samler hele sitet i .\dist
-powershell -NoProfile -File deploy.ps1   # bygger og publicerer til \\nas.protek.dk\web\protek.dk
+powershell -NoProfile -File deploy.ps1   # bygger og publicerer (maal i deploy.config.psd1)
 ```
+
+Deploy-målet ligger i `deploy.config.psd1`, som ikke er i git. Kopier `deploy.config.example.psd1` til `deploy.config.psd1` og ret `Destination` (webmappen på serveren) og `PublicUrl`.
 
 Alle Vite-projekter bruger `base: './'`, så de virker i enhver undermappe. Lokal udvikling: `npm run dev` i den enkelte mappe.
 
