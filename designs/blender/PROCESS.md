@@ -8,6 +8,7 @@ The short version: **Claude Code drives Blender 5.2 through the Blender MCP serv
 Python code in [`blender/scene.py`](blender/scene.py), rendered in Cycles as a fallback image, exported as a
 GLB, and shown live and rotating in the browser with Three.js. The one exception is the head of the marble
 bust, which is generated from a portrait photo with **TRELLIS** and then finished in Blender by the same script.
+The animated star is the hero; the bust turns on its plinth next to the contact heading.
 
 ---
 
@@ -106,7 +107,7 @@ established showcase. That made a site built this way a useful example in its ow
 | Prism | `build_prism` | glass triangular prism, white beam in, five coloured rays out (the five AI designs) | swings back and forth; glass replaced by a transparent physical material for stable rendering in the shared canvas |
 | Slicer view | `build_print_layers` | the star cut into 8 horizontal slabs with bmesh bisect and filled caps, pulled apart | rotates while the layers pull apart and stack back together (one node per layer, via `_join`) |
 | Printed star | reuses `star.glb` | mint PLA | rotates; layer lines drawn in a shader from object height (exaggerated so they read on screen) |
-| Contact | `build_contact` | speech bubble with "..." standing flat on the bed, 60 degree tail (printable without support), hotend with brass nozzle, PEI bed | 3D-printed live: a clipping plane rises as the current layer, the nozzle traces the layer outline (`bubbleSpan`), dots pulse like a typing indicator, then it prints out again |
+| Contact (replaced by the bust) | `build_contact` | speech bubble with "..." standing flat on the bed, 60 degree tail (printable without support), hotend with brass nozzle, PEI bed | 3D-printed live: a clipping plane rises as the current layer, the nozzle traces the layer outline (`bubbleSpan`), dots pulse like a typing indicator, then it prints out again |
 | AI dancers | `build_claude`, `build_openai`, `build_gemini` | pixel Claude from the site's SVG as blocks; a coin with the OpenAI mark from `openai.jpg` as texture; the Gemini sparkle from its SVG path, extruded with a vertex-colour gradient | one 4 second keyframed clip (`export_animation_mode='SCENE'`) played with an AnimationMixer; also used on the particle front page |
 
 Iterations worth recording:
@@ -176,7 +177,8 @@ likeness: goatee, jaw line, expression and collar.
 5. Decimate to about 180,000 faces, smooth shading, marble material (warm white, faint veins, subsurface).
 6. Dark stone plinth with a brass plaque reading "STEPHAN THIERRY".
 
-**Output.** `bust.glb` (1.6 MB with meshopt) in the hero viewport, and `bust.webp` as fallback. The footer credits
+**Output.** `bust.glb` (1.6 MB with meshopt), shown rotating next to the contact heading (first in the hero, moved there on
+request so the animated star could return to the hero), and `bust.webp` as fallback. The footer credits
 TRELLIS. The photos are not in the repo.
 
 ## 5. Formats
@@ -191,12 +193,12 @@ TRELLIS. The photos are not in the repo.
 | Materials | Principled BSDF to glTF PBR + KHR_materials_clearcoat, transmission, emissive_strength | gradients and iridescence that do not export are added in JS |
 
 Model sizes: bust 1.6 MB, helix 452 KB, star 306 KB, knot 241 KB, dancers 168 KB, layers 111 KB,
-contact 61 KB, prism 31 KB, ghstar 9 KB.
+prism 31 KB, ghstar 9 KB.
 
 ## 6. In the browser
 
-- **Hero (`src/main.js`):** its own WebGL renderer for the bust. Drag rotation with inertia and a pitch clamp,
-  a slow idle spin, a slight lean toward the pointer, and paused when off screen.
+- **Hero (`src/main.js`):** its own WebGL renderer for the animated star. Drag rotation with inertia, a slow idle
+  spin, a slight lean toward the pointer, and paused when off screen.
 - **Everything else (`src/views.js`):** one fixed, full-viewport canvas draws every model into the rectangle of
   its frame with **scissor viewports**, so nine models cost a single WebGL context. Models load when their frame
   is within one screen of the viewport. Each model is centred and fitted to its frame: by bounding sphere, or by
@@ -236,7 +238,7 @@ contact 61 KB, prism 31 KB, ghstar 9 KB.
 | Bust: TRELLIS dependencies | install nvdiffrast, the Gaussian rasteriser, kaolin | stub them, mesh path only | they are only needed for rendering and texture baking, and some are non-commercial licenses |
 | Bust: memory | ask for a pagefile (system change, restart) | lean loading, separate processes, apps closed for the run | no system change needed |
 | Bust: hair | keep the generated strands; Laplacian smoothing | shrinkwrap onto a smoothed volume | smoothing does not remove thin double-sided sheets; stone busts have sculpted hair anyway |
-| Bust placement | contact section; front page portrait | hero viewport of this design | most visible, fits the theme; the star stays in the Oprindelse section |
+| Bust placement | hero viewport (tried first); front page portrait | contact section | the owner wanted the animated star back in the hero; next to "Kontakt" the bust works as a personal sign-off. It replaced the 3D-printed speech bubble |
 | Where the design lives | `/blender` | `/designs/blender/` like the other designs | the owner's call once it joined the showcase |
 
 ## 9. Reproducing
@@ -248,7 +250,7 @@ exec(open(r'<repo>/designs/blender/blender/scene.py', encoding='utf-8').read())
 build_all()              # every element except the bust, in its own collection
 render_all(256)          # public/renders/*.webp
 export_star_glb()        # merged star + rings
-export_element_glbs()    # helix, ghstar, knot, prism, contact, layers (meshopt)
+export_element_glbs()    # helix, ghstar, knot, prism, layers (meshopt)
 export_dancers_glb()     # also copied to site/public/models for the front page
 check_print(80)          # the numbers in the 3D print section
 ```

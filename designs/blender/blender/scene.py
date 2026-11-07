@@ -497,7 +497,7 @@ def bubble_outline(seg=10):
 
 
 def build_contact():
-    """Contact: a speech bubble with '...' that the page 3D-prints live, plus the hotend and the print bed."""
+    """Former contact element (replaced by the bust, kept for reference): a speech bubble with '...' that the page 3D-prints live, plus the hotend and the print bed."""
     c = coll('Contact')
     pla = pla_mat('PLA_contact', PAL['mint'])
     d = BUBBLE['depth']
@@ -607,7 +607,6 @@ SHOTS = {
     'ghstar':  ('GhStar',      (1.5, -5.2, 5.4),  (0, 0, 0),    55, (1400, 1400)),
     'knot':    ('Knot',        (0, -8.5, 6.5),    (0, 0, 0),    50, (1400, 1400)),
     'prism':   ('Prism',       (0.5, -3.4, 11.5), (0.5, -0.7, 0), 45, (2000, 1250)),
-    'contact': ('Contact',     (2.6, -8.5, 4.2),  (0, 0, 1.5),  45, (1400, 1400)),
     'print':   ('PrintBed',    (3.5, -8.0, 5.6),  (0, 0, 0.0),  45, (1600, 1200)),
     'layers':  ('PrintLayers', (4.0, -8.0, 6.2),  (0, 0, 1.0),  50, (1600, 1200)),
 }
@@ -623,7 +622,6 @@ def build_all():
     build_ghstar()
     build_knot()
     build_prism()
-    build_contact()
     build_print_bed()
     build_print_layers()
     build_dancers()
@@ -982,11 +980,11 @@ def _join(objs, name):
 
 
 def export_element_glbs():
-    """helix, ghstar, knot, prism, contact and layers (one node per layer). The printed star reuses star.glb."""
+    """helix, ghstar, knot, prism and layers (one node per layer). The printed star reuses star.glb."""
     for c in bpy.context.scene.collection.children:
         c.hide_viewport = False
     out = {}
-    for key_, cname in (('helix', 'Helix'), ('ghstar', 'GhStar'), ('knot', 'Knot'), ('prism', 'Prism'), ('contact', 'Contact')):
+    for key_, cname in (('helix', 'Helix'), ('ghstar', 'GhStar'), ('knot', 'Knot'), ('prism', 'Prism')):
         out[key_] = _export(list(bpy.data.collections[cname].objects), f'{key_}.glb')
     # slicer view: one node per layer (named L0..), so the page can pull them apart and together
     layers = {}

@@ -44,16 +44,6 @@ function printMaterial() {
   return m;
 }
 
-// The speech bubble outline from scene.py (BUBBLE), so the nozzle can trace the layer being printed.
-const BUBBLE = { hx: 1.6, z1: 2.2, r: 0.55, tailZ: 0.9, tailTip: -2.15, depth: 0.5 };
-function bubbleSpan(h) {
-  const { hx, z1, r, tailZ, tailTip } = BUBBLE;
-  const corner = (dz) => hx - r + Math.sqrt(Math.max(0, r * r - dz * dz));
-  const right = h < r ? corner(r - h) : h > z1 - r ? corner(h - (z1 - r)) : hx;
-  const left = h > z1 - r ? -corner(h - (z1 - r)) : h >= tailZ ? -hx : tailTip + (-hx - tailTip) * (h / tailZ);
-  return [left, right];
-}
-
 // name -> how to load, orient and animate it. `dir` is the camera direction, `fill` how much of the frame it fills.
 const DEFS = {
   star: {
@@ -101,50 +91,10 @@ const DEFS = {
     },
     tick: (v, t) => { v.pivot.rotation.y = Math.sin(t * 0.4) * 0.9; v.pivot.rotation.x = Math.sin(t * 0.27) * 0.15; },
   },
-  contact: {
-    // A speech bubble 3D-printed live: the clipping plane is the current layer, the nozzle traces it.
-    url: 'models/contact.glb', dir: [0.45, 0.32, 1], fill: 1.05,
-    setup: (m, v) => {
-      v.m = m;
-      v.clip = new THREE.Plane(new THREE.Vector3(0, -1, 0), 0);
-      v.dots = [];
-      m.traverse((o) => {
-        if (o.name === 'Bubble') {
-          o.material = printMaterial();
-          o.material.clippingPlanes = [v.clip];
-          o.material.side = THREE.DoubleSide;
-        } else if (/^Dot\d/.test(o.name)) {
-          o.material = o.material.clone();
-          o.material.clippingPlanes = [v.clip];
-          v.dots.push(o);
-        } else if (o.name === 'Nozzle') {
-          v.nozzle = o;
-          v.home = o.position.clone();
-        }
-      });
-      v.dots.sort((a, b) => a.name.localeCompare(b.name));
-    },
-    tick: (v, t) => {
-      v.pivot.rotation.y = Math.sin(t * 0.35) * 0.5;
-      const T = 10, p = t % T, H = BUBBLE.z1 + 0.02;
-      const tri = (x) => 1 - Math.abs(((x % 2) + 2) % 2 - 1);   // 0..1..0 triangle wave
-      let h;
-      if (p < 6) h = H * (p / 6);                                // printing
-      else if (p < 8.5) h = H;                                  // done: nozzle parks, dots "type"
-      else h = H * (1 - (p - 8.5) / 1.5);                       // print it out again from the top
-      v.clip.constant = h + v.m.position.y + 0.001;
-      // nozzle: zig-zags across the current layer while printing, otherwise parks at home
-      const [x0, x1] = bubbleSpan(Math.min(h, BUBBLE.z1 - 0.001));
-      const work = new THREE.Vector3(x0 + (x1 - x0) * tri(p * 2.4), h + 0.01, (tri(p * 0.8) - 0.5) * BUBBLE.depth * 0.8);
-      const k = p < 6 ? Math.min(1, p / 0.4) : p < 6.6 ? 1 - (p - 6) / 0.6 : 0;
-      const e = k * k * (3 - 2 * k);
-      v.nozzle.position.copy(v.home).lerp(work, e);
-      // typing indicator once the print is finished
-      v.dots.forEach((d, i) => {
-        const s = p >= 6.6 && p < 8.5 ? 1 + 0.28 * Math.max(0, Math.sin((p - 6.6) * 7 - i * 0.9)) : 1;
-        d.scale.setScalar(s);
-      });
-    },
+  bust: {
+    // marble bust: head from TRELLIS, finished in Blender (build_bust); turns slowly on its plinth
+    url: 'models/bust.glb', dir: [0, 0.14, 1], fill: 1.0,
+    tick: (v, t) => { v.pivot.rotation.y = t * 0.4; },
   },
   layers: {
     url: 'models/layers.glb', dir: [0.35, 0.65, 0.8], fill: 1.15,
@@ -205,7 +155,6 @@ export function initViews() {
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.setClearColor(0x000000, 0);
-  renderer.localClippingEnabled = true; // the contact bubble is 'printed' with a clipping plane
   const env = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
 
   const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
