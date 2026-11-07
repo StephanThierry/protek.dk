@@ -289,7 +289,12 @@ a { color: inherit; }
 .foot__links a { color: var(--soft); text-decoration: none; }
 .foot__links a:hover { color: var(--mint); }
 .foot__tech { flex-basis: 100%; }
-@media (max-width: 760px) { .contact { grid-template-columns: 1fr; } .contact__at { max-width: 260px; } }
+@media (max-width: 760px) {
+  .contact { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+  .contact__at { max-width: 260px; width: 100%; margin-inline: auto; }
+  .contact .btn--big { max-width: 100%; overflow-wrap: anywhere; }
+  .foot { justify-content: center; text-align: center; }
+}
 
 /* ---------------------------------------------------------------- live models (views.js) */
 .views { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 10; pointer-events: none; }
