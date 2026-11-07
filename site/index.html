@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>protek.dk · Stephan Thierry, Senior Lead Engineer</title>
+<meta name="description" content="Stephan Thierry, Senior Lead Engineer hos TravelMind Group. AI-drevet udvikling og Harness Engineering, bygget på 28 års softwareudvikling, drift og ledelse.">
+<meta name="author" content="Stephan Thierry">
+<meta name="theme-color" content="#05090B">
+<link rel="icon" type="image/png" href="img/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap">
+</head>
+<body>
+
+<canvas id="gl" aria-hidden="true"></canvas>
+<div class="vignette" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<!-- Intro: tæller op, mens partiklerne samler sig -->
+<div class="intro" aria-hidden="true">
+  <div class="intro__inner">
+    <span class="intro__word">PROTEK</span>
+    <span class="intro__count"><span data-intro-count>0</span>%</span>
+  </div>
+</div>
+
+<header class="bar">
+  <a class="bar__mark" href="#top" data-goto="0" aria-label="protek.dk, til toppen"><img src="img/protek_logo_white.png" alt="protek.dk" width="979" height="260"></a>
+  <a class="pill pill--ghost" href="mailto:stephan@protek.dk">Send en mail</a>
+</header>
+
+<nav class="rail-nav" aria-label="Sektioner">
+  <ol>
+    <li><a href="#top" data-goto="0"><span>Top</span></a></li>
+    <li><a href="#oprindelse" data-goto="1"><span>Oprindelse</span></a></li>
+    <li><a href="#cv" data-goto="2"><span>CV</span></a></li>
+    <li><a href="#github" data-goto="3"><span>GitHub</span></a></li>
+    <li><a href="#poi" data-goto="4"><span>Points of interest</span></a></li>
+    <li><a href="#designs" data-goto="5"><span>Designs</span></a></li>
+    <li><a href="#kontakt" data-goto="6"><span>Kontakt</span></a></li>
+  </ol>
+</nav>
+
+<div class="progress" aria-hidden="true"><span></span></div>
+<div class="cursor" aria-hidden="true"></div>
+
+<main id="top">
+
+  <!-- 0 · Hero: tågen -->
+  <section class="sec hero" data-shape="0">
+    <div class="hero__copy">
+      <p class="eyebrow" data-fade>protek.dk · Senior Lead Engineer, TravelMind Group</p>
+      <h1 class="display display--xl" data-split>Stephan<br>Thierry</h1>
+      <p class="lede" data-fade><span data-years-since="1998">28</span> års erfaring med softwareudvikling, drift og ledelse. I dag: AI-agenter, der virker i produktion.</p>
+      <div class="hero__meta" data-fade>
+        <img class="hero__portrait" src="img/stephan_profile.jpg" width="400" height="400" alt="Stephan Thierry">
+        <p class="mono">Horsens, DK<br><span class="dim">Scroll for at forme partiklerne</span></p>
+      </div>
+    </div>
+    <div class="scrollcue" aria-hidden="true"><span></span></div>
+  </section>
+
+  <!-- 1 · Oprindelse: Protek-stjernen -->
+  <section class="sec origin" id="oprindelse" data-shape="1">
+    <div class="sec__copy">
+      <p class="eyebrow" data-fade>Est. 1998</p>
+      <h2 class="display display--lg" data-split><span class="hl">PRO</span>gress +<br><span class="hl">TEK</span>nos</h2>
+      <p class="lede" data-fade>Protek er en sammentrækning af PROgress for TEKnos, som var det første store projekt tilbage i 1998: Progress 4GL-extensions til MFG/PRO (ERP) for Teknos A/S i Vamdrup.</p>
+    </div>
+  </section>
+
+  <!-- 2 · CV: helixen. Kortene scroller forbi, mens spiralen glider sidelæns. -->
+  <section class="sec cv" id="cv" data-shape="2">
+    <div class="cv__sticky">
+      <p class="cv__year" aria-hidden="true"><span data-year-out>1994</span></p>
+      <div class="cv__head">
+        <p class="eyebrow">CV · 1994 til i dag</p>
+        <h2 class="display display--md" data-split>Fra 4GL Progress til ledelse og AI-agenter.</h2>
+      </div>
+    </div>
+
+    <ol class="cv__list">
+      <li class="job" data-year="1994">
+        <p class="job__when">1994 – 2001</p>
+        <h3 class="job__org"><img src="img/about/htx.jpg" alt="" width="40" height="40">Uddannelse</h3>
+        <ul>
+          <li><b>HTX svagstrøm</b>, Horsens, 1994–1997</li>
+          <li><b>Underviser</b>, LOF aftenskole, 1995–1996. Grundlæggende brug af EDB. (Ja, det hed EDB dengang!)</li>
+          <li><b>Datamatiker</b>, Horsens Handelsskole, 1999–2001</li>
+        </ul>
+      </li>
+      <li class="job" data-year="1998">
+        <p class="job__when">1998 – 2000</p>
+        <h3 class="job__org"><img src="img/about/teknos.jpg" alt="" width="40" height="40">Teknos A/S</h3>
+        <p class="job__role">Progress 4GL udvikler i mainframe-miljø</p>
+        <ul>
+          <li>Software til produktionsoptimering i Progress 4GL på MFG/PRO ERP-system.</li>
+          <li>Værktøjer til produktionsoptimering og miljøberegninger.</li>
+          <li>Projektleder og arkitekt på SAM, Sample Acknowledgement Management. Webbaseret råvareregistrering, implementeret på to fabrikker.</li>
+        </ul>
+      </li>
+      <li class="job" data-year="2001">
+        <p class="job__when">2001 – 2004</p>
+        <h3 class="job__org"><img src="img/about/itl.jpg" alt="" width="40" height="40">ITL A/S</h3>
+        <p class="job__role">.NET udvikler</p>
+        <ul>
+          <li>Kravspecifikation og udvikling i C#, T-SQL og klassisk ASP.</li>
+          <li>TDC Forlag, system til produktion af telefonbøger.</li>
+          <li>Bestseller, extranet til VeroModa og Jack &amp; Jones.</li>
+          <li>SimplexCMS, nyt CMS.</li>
+        </ul>
+      </li>
+      <li class="job" data-year="2004">
+        <p class="job__when">2004 – 2013</p>
+        <h3 class="job__org"><img src="img/about/travelmarket.png" alt="" width="40" height="40">Travelmarket A/S</h3>
+        <ul>
+          <li><b>.NET udvikler</b>, 2004–2006. C#, T-SQL, ASPX, Windows Forms, jQuery, LINQ, XML/XSD.</li>
+          <li><b>Projektleder</b>, 2006–2008. Planlægning af udvikling og daglig drift, rammeløsninger.</li>
+          <li><b>Udviklingschef for booking software og datacenter</b>, 2008–2013. Outsourcing-strategi, ansættelser, opkvalificering. Booking til SAS, DSB Netrejsebureau, Royal Jordanian Airlines, Nemrejse, Profil Rejser og Ålborg Lufthavn.</li>
+        </ul>
+      </li>
+      <li class="job" data-year="2013">
+        <p class="job__when">2013 – 2017</p>
+        <h3 class="job__org"><img src="img/about/ditmer.jpg" alt="" width="40" height="40">Ditmer A/S</h3>
+        <p class="job__role">Udviklingskonsulent, C# og JavaScript</p>
+        <ul>
+          <li>Offentlige digitaliseringsløsninger: NemID, AD FS, SLS (statens lønsystem), Navision, OPUS og PowerShell deployment.</li>
+          <li>Slopetrotters, ReactJS-applikation til prisadministration.</li>
+        </ul>
+        <a class="job__link" href="/react/">ReactJS-præsentation fra Ditmer Academy 2016 →</a>
+      </li>
+      <li class="job" data-year="2017">
+        <p class="job__when">2017 – 2022</p>
+        <h3 class="job__org"><img src="img/about/minerva.png" alt="" width="40" height="40">Minerva Group A/S</h3>
+        <p class="job__role">IT Manager</p>
+        <ul>
+          <li>Daglig ledelse af support team i UK, onboarding, dokumentation og udviklingsproces.</li>
+          <li>DevOps med GitLab pipelines, AWS-arkitektur, cloud-konfiguration og strategi.</li>
+          <li>Interne værktøjer i C#, JavaScript, NodeJS, PowerShell og bash.</li>
+          <li>Udvikling i <a href="https://aras.com" target="_blank" rel="noopener">Aras Innovator</a> (enterprise PLM) og undervisning i AML, JavaScript og C#.</li>
+          <li>Solution architect for Airbus på Aras-baseret projekt.</li>
+        </ul>
+        <p class="job__note">PLM-kunder bl.a. Airbus, BAE Systems, NEVS, Honda UK, Ecco, Lockheed Martin og DeLaval.</p>
+      </li>
+      <li class="job" data-year="2022">
+        <p class="job__when">2022 – 2023</p>
+        <h3 class="job__org"><img src="img/about/aras.png" alt="" width="40" height="40">Aras Corp, Boston</h3>
+        <p class="job__role">Senior Systems Architect</p>
+        <p>Cloud infrastructure og system design. Data migration. Security. Virksomhedssalg, Due Diligence process.</p>
+      </li>
+      <li class="job" data-year="2023">
+        <p class="job__when">2023 – 2024</p>
+        <h3 class="job__org"><img src="img/logos/abus_sec.png" alt="" width="40" height="40">ABUS Nordic A/S</h3>
+        <p class="job__role">Head of IT</p>
+        <p>Daglig ledelse og onboarding, serverdrift, Navision, interne værktøjer i C#, automatisering og migrering af legacy-systemer til cloud og SaaS.</p>
+      </li>
+      <li class="job" data-year="2024">
+        <p class="job__when">2024 – 2026</p>
+        <h3 class="job__org"><img src="img/about/impact.png" alt="" width="40" height="40">Impact Energy Trading a/s</h3>
+        <p class="job__role">CTO</p>
+        <ul>
+          <li>C#, ReactJS, Docker og GitLab CI/CD.</li>
+          <li>O365 og Intune, domain admin, telefoni og cloud-strategi.</li>
+          <li>AWS-infrastruktur med CloudWatch- og GuardDuty-overvågning.</li>
+          <li>Tradecapture til EPEX Spot M7, HUPX M7, ETPA NL og NordPool Intraday/Dayahead Auctions.</li>
+          <li>TSO Nominations (EZ/EnergyOne) og schedules.</li>
+          <li>Position, Imbalance og PNL API til quants med sub-second responstid. UMM tool og JAO MarketData.</li>
+        </ul>
+      </li>
+      <li class="job job--now" data-year="2026">
+        <p class="job__when"><span class="live"></span>2026 – i dag</p>
+        <h3 class="job__org"><img src="img/about/travelmind.png" alt="" width="40" height="40">TravelMind Group</h3>
+        <p class="job__role">Senior Lead Engineer</p>
+        <p>AI-drevet udvikling og Harness Engineering: agent-baserede workflows, rammer og guardrails, der gør AI-agenter pålidelige i produktion.</p>
+      </li>
+      <li class="job job--end" data-year="2026">
+        <p class="display display--sm">Mange flere projekter.</p>
+        <div class="dancers" role="img" aria-label="Claude, OpenAI og Gemini">
+          <svg class="d-claude" viewBox="0 0 64 44" shape-rendering="crispEdges" aria-hidden="true">
+            <g class="d-claude__all">
+              <g class="d-claude__arm d-claude__arm--l"><rect x="3" y="14" width="9" height="7" fill="#D97757"/></g>
+              <g class="d-claude__arm d-claude__arm--r"><rect x="52" y="14" width="9" height="7" fill="#D97757"/></g>
+              <rect class="d-claude__leg" style="--k:0" x="14" y="29" width="5" height="9" fill="#D97757"/>
+              <rect class="d-claude__leg d-claude__leg--b" x="22" y="29" width="5" height="9" fill="#D97757"/>
+              <rect class="d-claude__leg d-claude__leg--b" x="37" y="29" width="5" height="9" fill="#D97757"/>
+              <rect class="d-claude__leg" x="45" y="29" width="5" height="9" fill="#D97757"/>
+              <rect x="10" y="5" width="44" height="25" fill="#D97757"/>
+              <g class="d-claude__eyes" fill="#1a0f0b"><rect x="20" y="12" width="5" height="9"/><rect x="39" y="12" width="5" height="9"/></g>
+            </g>
+            <rect class="d-claude__shadow" x="10" y="40" width="44" height="3" fill="#000" opacity=".28"/>
+          </svg>
+          <span class="d-openai" aria-hidden="true"></span>
+          <svg class="d-gemini" viewBox="0 0 64 64" aria-hidden="true">
+            <defs><linearGradient id="gem" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#4285F4"/><stop offset=".55" stop-color="#9B72CB"/><stop offset="1" stop-color="#D96570"/></linearGradient></defs>
+            <path class="d-gemini__main" fill="url(#gem)" d="M32 6C33.500 21 43 30.500 58 32 43 33.500 33.500 43 32 58 30.500 43 21 33.500 6 32 21 30.500 30.500 21 32 6Z"/>
+            <path class="d-gemini__spark" style="--s:0s" fill="#9B72CB" d="M54 6C54.400 9.500 56.500 11.600 60 12 56.500 12.400 54.400 14.500 54 18 53.600 14.500 51.500 12.400 48 12 51.500 11.600 53.600 9.500 54 6Z"/>
+            <path class="d-gemini__spark" style="--s:-0.7s" fill="#4285F4" d="M9 44C9.300 46.500 10.800 48 13.300 48.300 10.800 48.600 9.300 50.100 9 52.600 8.700 50.100 7.200 48.600 4.700 48.300 7.200 48 8.700 46.500 9 44Z"/>
+            <path class="d-gemini__spark" style="--s:-1.4s" fill="#D96570" d="M10 5C10.200 6.800 11.200 7.800 13 8 11.200 8.200 10.200 9.200 10 11 9.800 9.200 8.800 8.200 7 8 8.800 7.800 9.800 6.800 10 5Z"/>
+          </svg>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <!-- 3 · GitHub: stjernen -->
+  <section class="sec gh" id="github" data-shape="3">
+    <div class="sec__copy">
+      <p class="eyebrow" data-fade>Open source · github.com/StephanThierry</p>
+      <p class="gh__num"><span data-gh-stars>264</span><small>★ stjerner</small></p>
+      <h2 class="display display--md" data-split>Fire væsentlige emner som projekter på GitHub.</h2>
+      <p class="lede" data-fade>Jeg har <span data-gh-repos>23</span> egne offentlige repos. Her er de fire områder, jeg har lagt værktøj og guides ud inden for.</p>
+      <ul class="tiles">
+        <li data-tilt><b>Sikkerhed</b><span>Linux-baseret VPN-relay.</span></li>
+        <li data-tilt><b>Machine learning</b><span>Multiclass-klassificeringsalgoritme med 99,9 % nøjagtighed.</span></li>
+        <li data-tilt><b>Serverdrift</b><span>Node.js på Linux server (Synology NAS), fra opsætning til stabil drift. Mit mest populære repo ★</span></li>
+        <li data-tilt><b>DevOps</b><span>GitHub Action, der rydder op på ftp og indgår direkte i GitHub-deployment.</span></li>
+      </ul>
+      <a class="pill pill--ghost" href="https://github.com/StephanThierry" target="_blank" rel="noopener">Se profilen på GitHub →</a>
+    </div>
+  </section>
+
+  <!-- 4 · Points of interest: knuden -->
+  <section class="sec poi" id="poi" data-shape="4">
+    <div class="sec__copy">
+      <p class="eyebrow" data-fade>Points of interest</p>
+      <h2 class="display display--md" data-split>Interessante aktiviteter.</h2>
+      <div class="poi__cards">
+        <article class="card" data-tilt>
+          <img class="card__logo" src="img/protek-star.png" alt="" width="56" height="56">
+          <h3>Protek</h3>
+          <p>Navnet på denne side og min egen virksomhed: en sammentrækning af Progress og Teknos. Startet i 1998 for at udvikle Progress 4GL-extensions til MFG/PRO (ERP) for Teknos A/S i Vamdrup. Projektet sluttede i 2001.</p>
+        </article>
+        <article class="card" data-tilt>
+          <img class="card__logo" src="img/bloodturn-b.png" alt="" width="56" height="56">
+          <h3>Bloodturn</h3>
+          <p>Metalcore-band med medlemmer fra Horsens, Aarhus, Grenaa og Taulov. Utilgivende metal med dobbeltpedal, tunge riffs og scream/growl-vokal.</p>
+          <a href="https://bloodturn.dk" target="_blank" rel="noopener">bloodturn.dk →</a>
+        </article>
+        <article class="card" data-tilt>
+          <img class="card__logo" src="img/travelmind-heart.png" alt="" width="56" height="56">
+          <h3>TravelMind Group</h3>
+          <p>Dansk ejet rejseparaply med seks brands: Skiferie.dk, Caddie Golfrejser, Campaya, Elcano Travel, Alltime Travel og BeActiveAway. Jeg indgår i Horsens Teamet som Senior Lead Engineer.</p>
+          <a href="https://travelmind.group/" target="_blank" rel="noopener">travelmind.group →</a>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 · Designs: timeglasset. Én dag i hånden mod to timer med AI. -->
+  <section class="sec designs" id="designs" data-shape="5">
+    <div class="sec__copy designs__intro">
+      <p class="eyebrow" data-fade>Designhistorik · 1 dag mod 2 timer</p>
+      <h2 class="display display--md" data-split>Ét startpunkt. Fem nye bud.</h2>
+      <p class="lede" data-fade>Det klassiske protek.dk var mit design i mange år, og det tog en hel dag at bygge i hånden. De fem nye designs, inklusive den side du kigger på nu, er udviklet med AI på 2 timer til sammen.</p>
+    </div>
+
+    <figure class="clock" data-clock>
+      <div class="clock__row">
+        <p class="clock__label"><b>Legacy</b><span>i hånden</span></p>
+        <div class="clock__track"><span class="clock__bar clock__bar--day" data-bar style="--w:1"></span></div>
+        <p class="clock__val">1 dag</p>
+      </div>
+      <div class="clock__row">
+        <p class="clock__label"><b>5 designs</b><span>med AI</span></p>
+        <div class="clock__track">
+          <span class="clock__bar clock__bar--ai" data-bar style="--w:.25">
+            <i style="--c:#C9F27A"></i><i style="--c:#7CF0C2"></i><i style="--c:#E8452C"></i><i style="--c:#2C7A8C"></i><i style="--c:#3F51B5"></i>
+          </span>
+        </div>
+        <p class="clock__val">2 timer</p>
+      </div>
+      <figcaption class="clock__cap">Målt mod en arbejdsdag på 8 timer. I snit cirka 24 minutter pr. design.</figcaption>
+    </figure>
+
+    <article class="origin-card" data-tilt>
+      <a class="shot" href="/designs/legacy/" target="_blank" rel="noopener" aria-label="Åbn det klassiske protek.dk">
+        <span class="shot__bar"><i></i><i></i><i></i><span>protek.dk</span></span>
+        <img src="img/designs/legacy.webp" width="1440" height="900" alt="Det klassiske protek.dk med portræt og Protek-logo" loading="lazy">
+      </a>
+      <div class="origin-card__body">
+        <p class="design__no">00 · Startpunktet</p>
+        <h3>protek.dk Classic</h3>
+        <p>Mit eget design og ansigtet udadtil i mange år. Bygget i hånden på én dag med Bootstrap, jQuery og en håndfuld webfonte. Alt det nye står på skuldrene af den her side: samme CV, samme stjerne, samme mand.</p>
+        <ul class="tags"><li>Bootstrap 3</li><li>jQuery</li><li>Font Awesome</li><li>1 dag</li></ul>
+        <a class="pill pill--ghost" href="/designs/legacy/" target="_blank" rel="noopener">Besøg legacy-siden →</a>
+      </div>
+    </article>
+
+    <ol class="design-grid">
+      <li class="design" style="--c:#C9F27A" data-tilt>
+        <a class="shot" href="/designs/plakat/" target="_blank" rel="noopener" aria-label="Åbn Plakat">
+          <span class="shot__bar"><i></i><i></i><i></i><span>protek.dk/designs/plakat</span></span>
+          <img src="img/designs/plakat.webp" width="1440" height="900" alt="Plakat: stor PROTEK i konturskrift over navnet" loading="lazy">
+        </a>
+        <p class="design__no">01 · AI</p>
+        <h3>Plakat</h3>
+        <p>Typografisk plakat i mørke toner. Kæmpe konturbogstaver, stramt grid og scroll-drevne animationer.</p>
+        <ul class="tags"><li>Scroll-animation</li><li>Typografi</li></ul>
+      </li>
+      <li class="design design--here" style="--c:#7CF0C2" data-tilt>
+        <a class="shot" href="#top" data-goto="0" aria-label="Til toppen af denne side">
+          <span class="shot__bar"><i></i><i></i><i></i><span>protek.dk</span></span>
+          <img src="img/designs/partikler.webp" width="1440" height="900" alt="Partikler: en glødende kugle af partikler bag navnet" loading="lazy">
+        </a>
+        <p class="design__no"><span class="live"></span>02 · AI · Du er her</p>
+        <h3>Partikler</h3>
+        <p>Op til 65.536 partikler simuleret på grafikkortet. De former sig efter hver sektion: tåge, stjerne, helix, knude, timeglas og @.</p>
+        <ul class="tags"><li>Three.js</li><li>GPGPU</li><li>GSAP</li></ul>
+      </li>
+      <li class="design" style="--c:#E8452C" data-tilt>
+        <a class="shot" href="/designs/bauhaus/" target="_blank" rel="noopener" aria-label="Åbn Bauhaus">
+          <span class="shot__bar"><i></i><i></i><i></i><span>protek.dk/designs/bauhaus</span></span>
+          <img src="img/designs/bauhaus.webp" width="1440" height="900" alt="Bauhaus: store sorte bogstaver og geometriske former i rød, gul og blå" loading="lazy">
+        </a>
+        <p class="design__no">03 · AI</p>
+        <h3>Bauhaus</h3>
+        <p>En legeplads med fysik. Bogstaverne i navnet falder ned, og du kan gribe dem og kaste med dem.</p>
+        <ul class="tags"><li>Matter.js</li><li>Fysik</li></ul>
+      </li>
+      <li class="design" style="--c:#4FA3B5" data-tilt>
+        <a class="shot" href="/designs/tidende/" target="_blank" rel="noopener" aria-label="Åbn Protek Tidende">
+          <span class="shot__bar"><i></i><i></i><i></i><span>protek.dk/designs/tidende</span></span>
+          <img src="img/designs/tidende.webp" width="1440" height="900" alt="Protek Tidende: avisforside med frakturhoved og spalter" loading="lazy">
+        </a>
+        <p class="design__no">04 · AI</p>
+        <h3>Protek Tidende</h3>
+        <p>CV'et som avisforside. Spalterne sættes live rundt om et portræt i rasterprint, som du kan trække rundt.</p>
+        <ul class="tags"><li>Pretext</li><li>Tekstlayout</li></ul>
+      </li>
+      <li class="design" style="--c:#6C7BE0" data-tilt>
+        <a class="shot" href="/designs/ebru/" target="_blank" rel="noopener" aria-label="Åbn Ebru">
+          <span class="shot__bar"><i></i><i></i><i></i><span>protek.dk/designs/ebru</span></span>
+          <img src="img/designs/ebru.webp" width="1440" height="900" alt="Ebru: navnet i blæk på vand med farvedråber" loading="lazy">
+        </a>
+        <p class="design__no">05 · AI</p>
+        <h3>Ebru</h3>
+        <p>Tyrkisk marmorering på vand. En væskesimulering på grafikkortet, hvor du trækker i vandet og drypper blæk.</p>
+        <ul class="tags"><li>WebGPU</li><li>TSL</li><li>Fluid sim</li></ul>
+      </li>
+    </ol>
+  </section>
+
+  <!-- 6 · Kontakt: @ -->
+  <section class="sec contact" id="kontakt" data-shape="6">
+    <div class="contact__inner">
+      <h2 class="display display--lg" data-split>Kontakt</h2>
+      <a class="pill pill--big" href="mailto:stephan@protek.dk" data-magnet>stephan@protek.dk</a>
+    </div>
+    <footer class="foot">
+      <span>Stephan Thierry · protek.dk (CVR 21905895)</span>
+      <span class="foot__links">
+        <a href="https://github.com/StephanThierry" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://www.linkedin.com/in/stephan-thierry/" target="_blank" rel="noopener">LinkedIn</a>
+        <a href="https://www.facebook.com/stephan.thierry" target="_blank" rel="noopener">Facebook</a>
+        <a href="#designs" data-goto="5">Andre designs</a>
+      </span>
+    </footer>
+  </section>
+
+</main>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>

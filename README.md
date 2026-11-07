@@ -1,17 +1,30 @@
 # protek.dk
 
-Stephan Thierrys personlige side. Statisk HTML, ingen build-step.
+Stephan Thierrys personlige side. Forsiden er partikeldesignet; de andre designs ligger som en showcase under `/designs/`.
 
-## Nyt design (feature/newdesign)
+## Struktur
 
-Siden er bygget om efter [scroll-craft](https://github.com/nateherkai/scroll-craft) (MIT):
+| Mappe | URL | Hvad |
+| --- | --- | --- |
+| `site/` | `/` | Partikler. Three.js GPGPU, GSAP, Lenis (Vite). Har sektionen *Designs* med showcasen. |
+| `designs/legacy/` | `/designs/legacy/` | Startpunktet: det klassiske Bootstrap-site, bygget i hånden på én dag. Statisk. |
+| `designs/plakat/` | `/designs/plakat/` | Typografisk plakat på [scroll-craft](https://github.com/nateherkai/scroll-craft) (MIT). Statisk. |
+| `designs/bauhaus/` | `/designs/bauhaus/` | Bauhaus-legeplads med Matter.js-fysik (Vite). |
+| `designs/tidende/` | `/designs/tidende/` | Protek Tidende, avisforside sat live med Pretext (Vite). |
+| `designs/ebru/` | `/designs/ebru/` | Ebru, marmorering på vand: WebGPU/TSL stable fluids (Vite). |
+| `react/` | `/react/` | ReactJS-præsentationen fra Ditmer Academy 2016. Deployes ikke herfra. |
 
-- `css/scrollcraft.css` og `js/scrollcraft.js` er motoren, uændret fra scroll-craft. Rediger dem ikke.
-- `css/protek.css` er sidens egne farver, typografi og layout.
-- `index.html` er semantisk HTML, drevet af `data-sc-*` attributter.
+De fem AI-designs er lavet med AI på 2 timer til sammen; legacy-sitet tog en hel dag i hånden.
 
-Grammatik: typographic poster. Signaturen er CV-sporet, hvor årstallet i hjørnet følger det kort, der står midt i sporet.
+## Byg og publicer
 
-Lokalt: server mappen med en vilkårlig statisk server og åbn `/`.
+```powershell
+powershell -NoProfile -File build.ps1    # samler hele sitet i .\dist
+powershell -NoProfile -File deploy.ps1   # bygger og publicerer til \\nas.protek.dk\web\protek.dk
+```
 
-Det gamle Bootstrap-tema ligger stadig i `css/agency.css` m.fl. og bruges ikke af `index.html`. `react/` er den selvstændige ReactJS-præsentation.
+Alle Vite-projekter bruger `base: './'`, så de virker i enhver undermappe. Lokal udvikling: `npm run dev` i den enkelte mappe.
+
+De gamle adresser `/newdesign/`, `/newdesign2/`, `/newdesign3/` og `/newdesign4/` omdirigerer til de nye.
+
+Skærmbillederne i showcasen ligger i `site/public/img/designs/` (1440×900, webp).

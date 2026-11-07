@@ -1,20 +1,24 @@
-# Publicerer protek.dk til NAS'en. Kør: powershell -File deploy.ps1
-# Stempler css/js med indholds-hash (?v=...), så Cloudflare og mobilbrowsere henter nye filer ved hver ændring.
+# Bygger hele protek.dk (build.ps1 -> .\dist) og publicerer det til NAS'en.
+# Koer: powershell -NoProfile -File deploy.ps1
+# Roden spejles IKKE, for webmappen indeholder andre ting (apk, react, upload ...), som ikke bor i repoet.
+# Kun de mapper, sitet ejer (assets, designs, newdesign*), spejles; index.html og img kopieres ovenpaa.
+# Vite giver js/css hash-navne, saa Cloudflare-cache ikke giver gamle filer.
 $ErrorActionPreference = 'Stop'
-$src = $PSScriptRoot
 $dst = '\\nas.protek.dk\web\protek.dk'
-if (-not (Test-Path $dst)) { throw "Kan ikke nå $dst" }
+if (-not (Test-Path $dst)) { throw "Kan ikke naa $dst" }
 
-$html = [IO.File]::ReadAllText("$src\index.html", [Text.Encoding]::UTF8)
-foreach ($f in 'css/scrollcraft.css', 'css/protek.css', 'js/scrollcraft.js') {
-  $h = (Get-FileHash ("$src\" + ($f -replace '/', '\')) -Algorithm SHA1).Hash.Substring(0, 10).ToLower()
-  $pattern = '(?<=["''])' + [regex]::Escape($f) + '(\?v=[0-9a-f]+)?(?=["''])'
-  $html = [regex]::Replace($html, $pattern, ($f + '?v=' + $h))
+& (Join-Path $PSScriptRoot 'build.ps1')
+$src = Join-Path $PSScriptRoot 'dist'
+
+function Sync($from, $to, [switch]$Mirror) {
+  $mode = if ($Mirror) { '/MIR' } else { '/E' }
+  robocopy $from $to $mode /XF Thumbs.db /NFL /NDL /NJH /NJS /NP /R:1 /W:1 | Out-Null
+  if ($LASTEXITCODE -ge 8) { throw "robocopy fejlede ($LASTEXITCODE): $from" }
+  $global:LASTEXITCODE = 0
 }
-[IO.File]::WriteAllText("$src\index.html", $html, (New-Object Text.UTF8Encoding($true)))
 
 Copy-Item "$src\index.html" "$dst\index.html" -Force
-foreach ($d in 'css', 'js', 'img', 'fonts') {
-  robocopy "$src\$d" "$dst\$d" /E /XF Thumbs.db *.psd /NFL /NDL /NJH /NJS /NP /R:1 /W:1 | Out-Null
-}
-Write-Host "Publiceret til $dst"
+Sync "$src\img" "$dst\img"
+foreach ($d in 'assets', 'designs', 'newdesign', 'newdesign2', 'newdesign3', 'newdesign4') { Sync "$src\$d" "$dst\$d" -Mirror }
+
+Write-Host "Publiceret til $dst  ->  https://protek.dk/"
