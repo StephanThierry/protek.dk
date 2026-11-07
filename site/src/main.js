@@ -281,12 +281,11 @@ ScrollTrigger.create({ trigger: '#cv', start: 'top bottom', end: 'bottom top', o
   try { cache = JSON.parse(localStorage.getItem(KEY)); } catch (e) { /* privat vindue */ }
   if (cache && cache.stars > 0) { target = cache.stars; if (cache.repos) reposEl.textContent = cache.repos; }
   starsEl.textContent = reduced ? target : 0;
-  const n = { v: 0 };
+  // Tallet følger scroll: 0 når det kommer ind i bunden af skærmen, total når det står midt i viewporten.
+  let st = null;
+  const show = () => { if (st) starsEl.textContent = Math.round(st.progress * target); };
   if (!reduced) {
-    ScrollTrigger.create({
-      trigger: '#github', start: 'top 60%', once: true,
-      onEnter: () => gsap.to(n, { v: target, duration: 2.2, ease: 'power3.out', onUpdate: () => (starsEl.textContent = Math.round(n.v)) }),
-    });
+    st = ScrollTrigger.create({ trigger: starsEl, start: 'top bottom', end: 'center center', onUpdate: show, onRefresh: show });
   }
   if (cache && Date.now() - cache.t < TTL) return;
   fetch(`https://api.github.com/users/${USER}/repos?per_page=100&type=owner`)
@@ -297,7 +296,7 @@ ScrollTrigger.create({ trigger: '#cv', start: 'top bottom', end: 'bottom top', o
       if (!list.length || !sum) return;
       target = sum;
       reposEl.textContent = list.length;
-      if (n.v >= 1 || reduced) starsEl.textContent = sum;
+      if (reduced) starsEl.textContent = sum; else show();
       try { localStorage.setItem(KEY, JSON.stringify({ t: Date.now(), stars: sum, repos: list.length })); } catch (e) { /* ignorer */ }
     })
     .catch(() => {});
