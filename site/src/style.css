@@ -413,3 +413,6 @@ main { position: relative; z-index: 5; }
 @keyframes openai-roll { 0%, 35% { transform: rotate(0deg); } 80%, 100% { transform: rotate(360deg); } }
 @keyframes gemini-pulse { 0%, 100% { transform: scale(0.86) rotate(0deg); } 50% { transform: scale(1.12) rotate(90deg); } }
 @keyframes gemini-spark { 0%, 100% { opacity: 0; transform: scale(0.2) rotate(0deg); } 50% { opacity: 1; transform: scale(1.15) rotate(45deg); } }
+
+/* name + CVR stay on one line; shrink the type on narrow screens instead of wrapping */
+.foot > span:first-child { white-space: nowrap; font-size: min(1em, calc((100vw - 3rem) / 26)); }

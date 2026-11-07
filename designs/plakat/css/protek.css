@@ -449,3 +449,6 @@
 @media (max-width: 860px) {
   .next { height: 2.75rem; padding: 0 0.9rem 0 1.15rem; }
 }
+
+/* name + CVR stay on one line; shrink the type on narrow screens instead of wrapping */
+.foot > span:first-child { white-space: nowrap; font-size: min(1em, calc((100vw - 3rem) / 26)); }

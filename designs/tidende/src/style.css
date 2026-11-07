@@ -287,3 +287,6 @@ html.reveal .clip:not(.is-in), html.reveal .feature:not(.is-in), html.reveal .ad
   .ad--big { padding: 20px 14px; }
   .listing tbody th { width: 40%; font-size: 1.02rem; }
 }
+
+/* name + CVR stay on one line; shrink the type on narrow screens instead of wrapping */
+.foot > span:first-child { white-space: nowrap; font-size: min(1em, calc((100vw - 3rem) / 28)); }

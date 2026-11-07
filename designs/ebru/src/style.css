@@ -285,3 +285,6 @@ body:not(.has-gpu) .tools { display: none; }
   .job { transform: none; opacity: 1; transition: none; }
   .hint__finger::after, .d-claude, .d-openai, .d-gemini, .d-claude__arm--l, .d-claude__arm--r, .d-claude__leg--b, .live { animation: none; }
 }
+
+/* name + CVR stay on one line; shrink the type on narrow screens instead of wrapping */
+.foot > span:first-child { white-space: nowrap; font-size: min(1em, calc((100vw - 3rem) / 26)); }
