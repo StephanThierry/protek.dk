@@ -997,3 +997,206 @@ def export_element_glbs():
     for o in joined:
         bpy.data.objects.remove(o, do_unlink=True)
     return out
+
+
+# ---------------------------------------------------------------- the marble bust (head from TRELLIS, finished here)
+
+def marble_mat(name='Marble'):
+    """Carrara-like marble for Cycles: warm white, faint grey veins, a touch of subsurface."""
+    m = mat(name, '#ECE8E1', 0.0, 0.28, 0.25)
+    nt = m.node_tree
+    b = nt.nodes['Principled BSDF']
+    b.inputs['Subsurface Weight'].default_value = 0.12
+    b.inputs['Subsurface Radius'].default_value = (0.3, 0.25, 0.2)
+    tc = nt.nodes.new('ShaderNodeTexCoord')
+    noise = nt.nodes.new('ShaderNodeTexNoise')
+    noise.inputs['Scale'].default_value = 1.4
+    noise.inputs['Detail'].default_value = 8
+    noise.inputs['Distortion'].default_value = 2.5
+    wave = nt.nodes.new('ShaderNodeTexWave')
+    wave.inputs['Scale'].default_value = 0.35
+    wave.inputs['Distortion'].default_value = 6
+    wave.inputs['Detail'].default_value = 6
+    ramp = nt.nodes.new('ShaderNodeValToRGB')
+    # thin, sparse veins: only the very bottom of the wave turns grey
+    ramp.color_ramp.elements[0].position = 0.0
+    ramp.color_ramp.elements[0].color = lin('#A8A59F')
+    ramp.color_ramp.elements[1].position = 0.1
+    ramp.color_ramp.elements[1].color = lin('#ECE8E1')
+    nt.links.new(tc.outputs['Object'], noise.inputs['Vector'])
+    nt.links.new(noise.outputs['Color'], wave.inputs['Vector'])
+    nt.links.new(wave.outputs['Fac'], ramp.inputs['Fac'])
+    nt.links.new(ramp.outputs['Color'], b.inputs['Base Color'])
+    return m
+
+
+def build_bust(ply, height=3.6, voxel=0.009, smooth=3, faces=110000):
+    """Import the TRELLIS mesh, close and smooth it like sculpted stone, decimate for the web, add the plinth."""
+    c = coll('Bust')
+    for o in list(c.objects):
+        bpy.data.objects.remove(o, do_unlink=True)
+    bpy.ops.wm.ply_import(filepath=ply)
+    o = bpy.context.selected_objects[0]
+    link(o, c)
+    o.name = 'Bust'
+    # scale to `height`, stand it on z = 0, centred in x/y
+    bpy.context.view_layer.update()
+    bb = [o.matrix_world @ Vector(v) for v in o.bound_box]
+    h = max(v.z for v in bb) - min(v.z for v in bb)
+    o.scale = (height / h,) * 3
+    bpy.context.view_layer.objects.active = o
+    bpy.ops.object.select_all(action='DESELECT')
+    o.select_set(True)
+    bpy.ops.object.transform_apply(scale=True)
+    bb = [Vector(v) for v in o.bound_box]
+    cx = (max(v.x for v in bb) + min(v.x for v in bb)) / 2
+    cy = (max(v.y for v in bb) + min(v.y for v in bb)) / 2
+    o.data.transform(__import__('mathutils').Matrix.Translation((-cx, -cy, -min(v.z for v in bb))))
+    # stone finish: voxel remesh closes the flaky hair strands, a gentle smooth reads as chiselled and polished
+    r = o.modifiers.new('Remesh', 'REMESH')
+    r.mode = 'VOXEL'
+    r.voxel_size = voxel
+    s = o.modifiers.new('Smooth', 'CORRECTIVE_SMOOTH')
+    s.iterations = smooth
+    s.smooth_type = 'LENGTH_WEIGHTED'
+    s.use_only_smooth = True
+    # the hair: the generated strands are flaky, so smooth the top of the head hard into sculpted stone hair
+    with bpy.context.temp_override(object=o, active_object=o):
+        bpy.ops.object.modifier_apply(modifier='Remesh')
+    vg = o.vertex_groups.new(name='Hair')
+    for v in o.data.vertices:
+        t = (v.co.z / height - 0.76) / 0.07
+        if t > 0:
+            vg.add([v.index], min(1.0, t), 'REPLACE')
+    # thin double-sided flakes survive smoothing, so pull the hair region onto a calm hair volume instead:
+    # a coarse voxel copy of the head, smoothed hard, used as a shrinkwrap target
+    proxy = o.copy()
+    proxy.data = o.data.copy()
+    proxy.name = 'HairProxy'
+    c.objects.link(proxy)
+    pr = proxy.modifiers.new('Remesh', 'REMESH')
+    pr.mode = 'VOXEL'
+    pr.voxel_size = 0.06
+    ps = proxy.modifiers.new('Smooth', 'SMOOTH')
+    ps.factor = 1.0
+    ps.iterations = 40
+    hs = o.modifiers.new('HairSmooth', 'SHRINKWRAP')
+    hs.target = proxy
+    hs.wrap_method = 'NEAREST_SURFACEPOINT'
+    hs.vertex_group = 'Hair'
+    hs2 = o.modifiers.new('HairBlend', 'CORRECTIVE_SMOOTH')
+    hs2.iterations = 8
+    hs2.vertex_group = 'Hair'
+    hs2.use_only_smooth = True
+    # a final fine remesh welds the shrinkwrapped hair (no overlapping faces), then a light smooth
+    cr = o.modifiers.new('Clean', 'REMESH')
+    cr.mode = 'VOXEL'
+    cr.voxel_size = voxel
+    cs = o.modifiers.new('CleanSmooth', 'CORRECTIVE_SMOOTH')
+    cs.iterations = 2
+    cs.use_only_smooth = True
+    d = o.modifiers.new('Decimate', 'DECIMATE')
+    bpy.context.view_layer.update()
+    n = len(o.evaluated_get(bpy.context.evaluated_depsgraph_get()).data.polygons)
+    d.ratio = min(1.0, faces / max(n, 1))
+    for mname in ('Smooth', 'HairSmooth', 'HairBlend', 'Clean', 'CleanSmooth', 'Decimate'):
+        with bpy.context.temp_override(object=o, active_object=o):
+            bpy.ops.object.modifier_apply(modifier=mname)
+    bpy.data.objects.remove(proxy, do_unlink=True)
+    # last touch: drop tiny loose fragments and sand down any nub left at the very top of the hair
+    bm = bmesh.new()
+    bm.from_mesh(o.data)
+    bm.verts.ensure_lookup_table()
+    seen, small = set(), []
+    for v in bm.verts:
+        if v.index in seen:
+            continue
+        stack, isl = [v], []
+        seen.add(v.index)
+        while stack:
+            x = stack.pop()
+            isl.append(x)
+            for e in x.link_edges:
+                w = e.other_vert(x)
+                if w.index not in seen:
+                    seen.add(w.index)
+                    stack.append(w)
+        if len(isl) < 500:
+            small += isl
+    bmesh.ops.delete(bm, geom=small, context='VERTS')
+    # spikes: compare the top of the head with a heavily smoothed copy; whatever sticks out the most gets sanded down
+    hair = [v for v in bm.verts if v.co.z > height * 0.74]
+    orig = {v.index: v.co.copy() for v in hair}
+    for _ in range(30):
+        bmesh.ops.smooth_vert(bm, verts=hair, factor=0.5, use_axis_x=True, use_axis_y=True, use_axis_z=True)
+    smooth_co = {v.index: v.co.copy() for v in hair}
+    for v in hair:
+        v.co = orig[v.index]
+    spikes = {v for v in hair if (orig[v.index] - smooth_co[v.index]).length > 0.035}
+    for _ in range(4):  # grow the selection a few rings so the sanding blends in
+        spikes |= {e.other_vert(v) for v in list(spikes) for e in v.link_edges}
+    spikes = list(spikes)
+    for _ in range(60):
+        bmesh.ops.smooth_vert(bm, verts=spikes, factor=0.6, use_axis_x=True, use_axis_y=True, use_axis_z=True)
+    # a blunt nub at the crown is too wide for that test: flatten the area around the highest point hard
+    top = max(bm.verts, key=lambda v: v.co.z).co.copy()
+    crown = [v for v in bm.verts if (v.co - top).length < 0.3]
+    for _ in range(300):
+        bmesh.ops.smooth_vert(bm, verts=crown, factor=0.7, use_axis_x=True, use_axis_y=True, use_axis_z=True)
+    # needles: single thin spikes whose faces point in opposite directions; sand them away too
+    bm.normal_update()
+    needles = {v for v in bm.verts if v.co.z > height * 0.6 and
+               any(f1.normal.dot(f2.normal) < -0.3 for f1 in v.link_faces for f2 in v.link_faces)}
+    for _ in range(3):
+        needles |= {e.other_vert(v) for v in list(needles) for e in v.link_edges}
+    needles = list(needles)
+    for _ in range(120):
+        bmesh.ops.smooth_vert(bm, verts=needles, factor=0.6, use_axis_x=True, use_axis_y=True, use_axis_z=True)
+    bm.to_mesh(o.data)
+    bm.free()
+    for p in o.data.polygons:
+        p.use_smooth = True
+    o.data.materials.clear()
+    o.data.materials.append(marble_mat())
+    # plinth: dark stone block with a chamfer, brass plaque with the name
+    bb = [Vector(v) for v in o.bound_box]
+    w = (max(v.x for v in bb) - min(v.x for v in bb)) * 0.82
+    dpt = (max(v.y for v in bb) - min(v.y for v in bb)) * 0.95
+    stone = mat('Plinth', '#2A3135', 0.0, 0.42, 0.3)
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, -0.45))
+    pl = bpy.context.active_object
+    pl.name = 'Plinth'
+    pl.scale = (w, dpt, 0.9)
+    bpy.ops.object.transform_apply(scale=True)
+    pl.data.materials.append(stone)
+    bevel(pl, 0.05, 3)
+    link(pl, c)
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, -dpt / 2 - 0.01, -0.45))
+    plate = bpy.context.active_object
+    plate.name = 'Plaque'
+    plate.scale = (w * 0.72, 0.03, 0.36)
+    bpy.ops.object.transform_apply(scale=True)
+    brass = mat('PlaqueBrass', '#C9A24A', 1.0, 0.3)
+    plate.data.materials.append(brass)
+    bevel(plate, 0.012, 2)
+    link(plate, c)
+    cu = bpy.data.curves.new('PlaqueText', 'FONT')
+    cu.body = 'STEPHAN THIERRY'
+    cu.size = 0.2
+    cu.extrude = 0.01
+    cu.align_x = 'CENTER'
+    cu.align_y = 'CENTER'
+    t = bpy.data.objects.new('PlaqueText', cu)
+    c.objects.link(t)
+    t.location = (0, -dpt / 2 - 0.035, -0.45)
+    t.rotation_euler = (math.radians(90), 0, 0)
+    cu.materials.append(mat('PlaqueInk', '#1A1410', 0.4, 0.5))
+    return {'faces': len(o.data.polygons), 'size': tuple(round(x, 3) for x in o.dimensions)}
+
+
+def export_bust_glb():
+    show_only('Bust')
+    return _export(list(bpy.data.collections['Bust'].objects), 'bust.glb')
+
+
+SHOTS['bust'] = ('Bust', (3.5, -11.0, 3.6), (0, 0, 1.3), 50, (1400, 1600))
