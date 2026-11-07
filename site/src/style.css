@@ -354,7 +354,8 @@ main { position: relative; z-index: 5; }
 }
 
 /* ------------------------------------------------------- AI-figurerne */
-.dancers { display: flex; align-items: flex-end; gap: 1.5rem; margin-top: 1.5rem; }
+.job__help { margin: 0.6rem 0 0; font: 400 0.82rem/1.5 var(--f-mono); color: var(--ink-soft); text-shadow: 0 1px 10px var(--bg), 0 0 3px var(--bg); }
+.dancers { display: flex; align-items: flex-end; justify-content: center; gap: 1.5rem; margin-top: 1.5rem; }
 .dancers > * { flex: none; height: 3.2rem; width: auto; overflow: visible; }
 .d-claude { aspect-ratio: 64 / 44; }
 .d-claude__arm { transform-box: fill-box; transform-origin: 0 100%; }
