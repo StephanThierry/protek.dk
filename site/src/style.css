@@ -191,7 +191,7 @@ main { position: relative; z-index: 5; }
 .job__note { margin: 0.9rem 0 0; font: 400 0.82rem/1.5 var(--f-mono); color: var(--ink-dim); }
 .job__link { display: inline-block; margin-top: 0.9rem; color: var(--accent); text-decoration: none; font-weight: 500; }
 .job__link:hover { text-decoration: underline; }
-.job--end { background: none; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; padding-inline: 0; }
+.job--end { text-align: center; background: none; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; padding-inline: 0; }
 .live { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 0 rgb(124 240 194 / 0.6); }
 @media (prefers-reduced-motion: no-preference) { .live { animation: live 1.8s infinite; } }
 @keyframes live { to { box-shadow: 0 0 0 12px rgb(124 240 194 / 0); } }
