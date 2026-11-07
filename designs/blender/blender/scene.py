@@ -862,6 +862,11 @@ def export_dancers_glb():
                               export_yup=True, export_animations=True, export_animation_mode='SCENE',
                               export_frame_range=True, export_force_sampling=True,
                               export_image_format='WEBP')
+    # the particle front page (site/) plays the same animation
+    import shutil
+    site = os.path.normpath(os.path.join(ROOT, '..', '..', 'site', 'public', 'models'))
+    os.makedirs(site, exist_ok=True)
+    shutil.copyfile(path, os.path.join(site, 'dancers.glb'))
     return path
 
 

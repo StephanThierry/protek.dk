@@ -371,6 +371,9 @@ main { position: relative; z-index: 5; }
 .job__help { margin: 0.6rem 0 0; font: 400 0.82rem/1.5 var(--f-mono); color: var(--ink-soft); text-shadow: 0 1px 10px var(--bg), 0 0 3px var(--bg); }
 .dancers { display: flex; align-items: flex-end; justify-content: center; gap: 1.5rem; margin-top: 1.5rem; }
 .dancers > * { flex: none; height: 3.2rem; width: auto; overflow: visible; }
+/* 3D version from Blender (src/dancers.js); the SVG figures are the fallback */
+.dancers.is-3d > :not(.dancers__3d) { display: none; }
+.dancers > .dancers__3d { display: block; width: min(100%, 30rem); height: auto; aspect-ratio: 5 / 2; }
 .d-claude { aspect-ratio: 64 / 44; }
 .d-claude__arm { transform-box: fill-box; transform-origin: 0 100%; }
 .d-claude__arm--r { transform-origin: 100% 100%; }

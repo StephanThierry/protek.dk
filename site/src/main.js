@@ -8,6 +8,7 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { SplitText } from 'gsap/SplitText';
 import Lenis from 'lenis';
+import { initDancers } from './dancers.js';
 import { Particles } from './particles.js';
 import { buildShapes, CV_INDEX, HELIX_LEN } from './shapes.js';
 
@@ -344,3 +345,6 @@ if (finePointer && !reduced) {
     el.addEventListener('pointerleave', () => gsap.to(el, { rotateY: 0, rotateX: 0, duration: 0.8, ease: 'elastic.out(1, 0.5)' }));
   });
 }
+
+// Claude, OpenAI and Gemini in 3D (animated GLB from Blender), SVG dancers as fallback.
+initDancers();
