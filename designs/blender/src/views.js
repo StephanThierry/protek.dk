@@ -92,7 +92,7 @@ const DEFS = {
     tick: (v, t) => { v.pivot.rotation.y = Math.sin(t * 0.4) * 0.9; v.pivot.rotation.x = Math.sin(t * 0.27) * 0.15; },
   },
   bust: {
-    // marble bust: head from TRELLIS, finished in Blender (build_bust); turns slowly on its plinth
+    // marble bust: hair and body from TRELLIS, face from a photogrammetry scan, joined in Blender (build_bust_hybrid); turns slowly on its plinth
     url: 'models/bust.glb', dir: [0, 0.14, 1], fill: 1.0,
     tick: (v, t) => { v.pivot.rotation.y = t * 0.4; },
   },

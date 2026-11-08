@@ -6,8 +6,9 @@ considered along the way with the reason each was or was not chosen.
 
 The short version: **Claude Code drives Blender 5.2 through the Blender MCP server**. Every element is built by
 Python code in [`blender/scene.py`](blender/scene.py), rendered in Cycles as a fallback image, exported as a
-GLB, and shown live and rotating in the browser with Three.js. The one exception is the head of the marble
-bust, which is generated from a portrait photo with **TRELLIS** and then finished in Blender by the same script.
+GLB, and shown live and rotating in the browser with Three.js. The one exception is the marble bust: its hair,
+jacket and body are generated from a portrait photo with **TRELLIS**, its face comes from a photogrammetry scan
+(102 photos, COLMAP and OpenMVS), and the two are joined and finished in Blender (see 4.6 and 4.7).
 The animated star is the hero; the bust turns on its plinth next to the contact heading.
 
 ---
@@ -33,10 +34,12 @@ The animated star is the hero; the bust turns on its plinth next to the contact 
 | Web | Three.js | ^0.187 | MIT | live GLBs, AnimationMixer, clipping, custom shaders |
 | Web | Vite | ^6.4 | MIT | build with relative base `./` |
 | Decoder | three/examples MeshoptDecoder | with Three.js | MIT | decodes EXT_meshopt_compression GLBs |
-| Image-to-3D | TRELLIS (`microsoft/TRELLIS`, commit 193e050) | weights `microsoft/TRELLIS-image-large` | MIT (code and weights) | head of the bust |
+| Image-to-3D | TRELLIS (`microsoft/TRELLIS`, commit 193e050) | weights `microsoft/TRELLIS-image-large` | MIT (code and weights) | hair, jacket and body of the bust |
 | Its parts | DINOv2 (image features), FlexiCubes (mesh extraction) | | Apache 2.0 | used inside TRELLIS |
 | Its runtime | Python 3.12 venv, PyTorch 2.7.1+cu128, xformers 0.0.31.post1, spconv-cu126 2.3.8 | | BSD / Apache | sm_120 (Blackwell) support |
-| Cutout | rembg (u2net) | | MIT / Apache | background removal of the portrait |
+| Cutout | rembg (u2net) | | MIT / Apache | background removal of the portrait and of the scan photos |
+| Photogrammetry | COLMAP (CUDA build) | 4.2.1 | BSD | camera poses of the 102 photos |
+| Dense mesh | OpenMVS | 2.4.0 | AGPL-3.0 | depth maps, fusion and meshing; used as a tool, its output is not covered |
 | QA | puppeteer-core + Chrome, Pillow | | Apache / MIT-CMU | screenshots, contact sheets |
 
 Every Blender call went through the MCP tool `execute_blender_code`. The script is the source of truth:
@@ -177,16 +180,52 @@ likeness: goatee, jaw line, expression and collar.
 5. Decimate to about 180,000 faces, smooth shading, marble material (warm white, faint veins, subsurface).
 6. Dark stone plinth with a brass plaque reading "STEPHAN THIERRY".
 
-**Output.** `bust.glb` (1.6 MB with meshopt), shown rotating next to the contact heading (first in the hero, moved there on
-request so the animated star could return to the hero), and `bust.webp` as fallback. The footer credits
-TRELLIS. The photos are not in the repo.
+**TRELLIS-only result.** This bust was live first: `bust.glb` (1.6 MB with meshopt), shown rotating next to the contact
+heading (first in the hero, moved there on request so the animated star could return to the hero), and `bust.webp` as
+fallback. Its face was the weak part: TRELLIS invents everything a single photo does not show, and the likeness was
+only approximate. Section 4.7 replaces the face. The photos are not in the repo.
+
+### 4.7 The photogrammetry face and the hybrid bust (`scan/`)
+
+The owner then photographed a full 360 degree orbit: 102 frames (Canon EOS R8, 6000 x 4000, no glasses, even daylight).
+That is enough to measure the shape of the head instead of guessing it. The whole pipeline, with every command, is in
+[`blender/scan/README.md`](blender/scan/README.md); the sources and the 3D models needed to rebuild the bust are in
+`blender/scan/`. In short:
+
+1. **Poses and mesh.** COLMAP finds the camera poses (the white room needed a lower SIFT threshold: 2,700 to 8,000
+   features per frame), the subject is cut out of every frame with rembg, and OpenMVS builds a dense mesh. Masking
+   was the largest single improvement, because the unmasked reconstruction spent its pixels on the room. 3000 px depth
+   maps crashed in the fusion step (no pagefile), 2250 px worked. `--smooth 6` removes the bumpy skin that
+   photogrammetry gives; lighter smoothing brings it back and smoothing afterwards does not remove it.
+2. **Upright head** (`prepare_scan.py`). The cameras give the head centre (the point closest to all viewing rays), up
+   (the image axes) and the facing direction (a frontal frame).
+3. **Alignment** (`align_face.py`). The head was turned about 20 degrees in the orbit, so the yaw is undone first
+   (nose tip and the middle between the ears), then scale (1.48) and position come from a trimmed ICP on the face
+   (median distance about 2 mm).
+4. **Face swap** (`hybrid_bust.py`). The TRELLIS bust keeps its hair, jacket and body. Its face vertices (an ellipse
+   that fades out before the old hairline) are projected along y onto the scan. Projecting to the *nearest* surface
+   point tore the surface under the nose and chin, because the two faces differ most there; a straight projection does
+   not. The transition band is smoothed and the skin lightly relaxed.
+5. **Relief from the photos** (`photo_features.py`). A photogrammetry mesh has almost no eyes, brows or lips, but the
+   photos do. Each face vertex is projected into the seven most frontal frames (the poses are known), the luminance is
+   band-passed, and where the skin is darker than its surroundings the surface is pushed in. At full strength (3.5 mm)
+   the brows became drawn-on lines, so 30% is used. Amplifying the scan's own geometry (unsharp mask alone) did almost
+   nothing visible.
+6. **Crown.** A small horn on the front edge of the TRELLIS crown, a leftover of the generation, is sanded away.
+
+Other variants built from the same scan (a baseball cap with an embroidered NY, a top hat, a jacket with a tie) are in
+`build_bust_scan()` in `scene.py`; they were not used on the page.
+
+**Output.** `bust.glb` (1.6 MB with meshopt, 178,510 faces) and `bust.webp`, same shot as before. The footer credits
+TRELLIS, COLMAP and OpenMVS.
 
 ## 5. Formats
 
 | Stage | Format | Notes |
 | --- | --- | --- |
 | Inputs | SVG polygon coordinates in code, analytic shapes, `openai.jpg`, JPEG/PNG portraits | portraits stay outside the repo |
-| TRELLIS intermediates | RGBA PNG (cutout), `.slat` (PyTorch tensors), PLY mesh | in `C:\ai\bust`, outside the repo |
+| TRELLIS intermediates | RGBA PNG (cutout), `.slat` (PyTorch tensors), PLY mesh | in `C:\ai\bust`, outside the repo (the chosen PLY is in `blender/scan/models`) |
+| Scan intermediates | 102 JPGs (about 540 MB), masks, COLMAP model, OpenMVS scene, PLY meshes | in `C:\ai\scan`, outside the repo; the upright head PLY, the alignment and the per-vertex photo feature are in `blender/scan/` |
 | Fallback renders | WEBP RGBA, written by Blender | 27 to 322 KB each |
 | Live models | glTF 2.0 binary (GLB), Y-up, modifiers applied, EXT_meshopt_compression for the element models | the star and the dancers are uncompressed; meshopt roughly halved the helix (985 to 452 KB) and the knot |
 | Animation | glTF animation, one sampled clip of 96 frames at 24 fps | dancers |

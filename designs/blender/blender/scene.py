@@ -1028,6 +1028,42 @@ def marble_mat(name='Marble'):
     return m
 
 
+def bust_plinth(o, c, wf=0.82, df=0.95):
+    """Dark stone plinth with a brass plaque reading the name, sized to the bust `o`."""
+    bb = [Vector(v) for v in o.bound_box]
+    w = (max(v.x for v in bb) - min(v.x for v in bb)) * wf
+    dpt = (max(v.y for v in bb) - min(v.y for v in bb)) * df
+    stone = mat('Plinth', '#2A3135', 0.0, 0.42, 0.3)
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, -0.45))
+    pl = bpy.context.active_object
+    pl.name = 'Plinth'
+    pl.scale = (w, dpt, 0.9)
+    bpy.ops.object.transform_apply(scale=True)
+    pl.data.materials.append(stone)
+    bevel(pl, 0.05, 3)
+    link(pl, c)
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, -dpt / 2 - 0.01, -0.45))
+    plate = bpy.context.active_object
+    plate.name = 'Plaque'
+    plate.scale = (w * 0.72, 0.03, 0.36)
+    bpy.ops.object.transform_apply(scale=True)
+    brass = mat('PlaqueBrass', '#C9A24A', 1.0, 0.3)
+    plate.data.materials.append(brass)
+    bevel(plate, 0.012, 2)
+    link(plate, c)
+    cu = bpy.data.curves.new('PlaqueText', 'FONT')
+    cu.body = 'STEPHAN THIERRY'
+    cu.size = 0.2
+    cu.extrude = 0.01
+    cu.align_x = 'CENTER'
+    cu.align_y = 'CENTER'
+    t = bpy.data.objects.new('PlaqueText', cu)
+    c.objects.link(t)
+    t.location = (0, -dpt / 2 - 0.035, -0.45)
+    t.rotation_euler = (math.radians(90), 0, 0)
+    cu.materials.append(mat('PlaqueInk', '#1A1410', 0.4, 0.5))
+
+
 def build_bust(ply, height=3.6, voxel=0.009, smooth=3, faces=110000):
     """Import the TRELLIS mesh, close and smooth it like sculpted stone, decimate for the web, add the plinth."""
     c = coll('Bust')
@@ -1156,40 +1192,685 @@ def build_bust(ply, height=3.6, voxel=0.009, smooth=3, faces=110000):
         p.use_smooth = True
     o.data.materials.clear()
     o.data.materials.append(marble_mat())
-    # plinth: dark stone block with a chamfer, brass plaque with the name
-    bb = [Vector(v) for v in o.bound_box]
-    w = (max(v.x for v in bb) - min(v.x for v in bb)) * 0.82
-    dpt = (max(v.y for v in bb) - min(v.y for v in bb)) * 0.95
-    stone = mat('Plinth', '#2A3135', 0.0, 0.42, 0.3)
-    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, -0.45))
-    pl = bpy.context.active_object
-    pl.name = 'Plinth'
-    pl.scale = (w, dpt, 0.9)
-    bpy.ops.object.transform_apply(scale=True)
-    pl.data.materials.append(stone)
-    bevel(pl, 0.05, 3)
-    link(pl, c)
-    bpy.ops.mesh.primitive_cube_add(size=1, location=(0, -dpt / 2 - 0.01, -0.45))
-    plate = bpy.context.active_object
-    plate.name = 'Plaque'
-    plate.scale = (w * 0.72, 0.03, 0.36)
-    bpy.ops.object.transform_apply(scale=True)
-    brass = mat('PlaqueBrass', '#C9A24A', 1.0, 0.3)
-    plate.data.materials.append(brass)
-    bevel(plate, 0.012, 2)
-    link(plate, c)
-    cu = bpy.data.curves.new('PlaqueText', 'FONT')
-    cu.body = 'STEPHAN THIERRY'
-    cu.size = 0.2
-    cu.extrude = 0.01
+    bust_plinth(o, c)
+    return {'faces': len(o.data.polygons), 'size': tuple(round(x, 3) for x in o.dimensions)}
+
+
+def _boundary_loops(bm):
+    """Ordered vertex loops of the open boundary of `bm` (edges with a single face)."""
+    edges = [e for e in bm.edges if len(e.link_faces) == 1]
+    nxt = {}
+    for e in edges:
+        for v in e.verts:
+            nxt.setdefault(v, []).append(e.other_vert(v))
+    loops, seen = [], set()
+    for v0 in nxt:
+        if v0 in seen:
+            continue
+        loop, v, prev = [v0], v0, None
+        seen.add(v0)
+        while True:
+            cand = [w for w in nxt[v] if w is not prev and w not in seen]
+            if not cand:
+                break
+            prev, v = v, cand[0]
+            loop.append(v)
+            seen.add(v)
+        loops.append(loop)
+    return loops
+
+
+def _cap_loop(bm, loop, dome=0.0, rings=14, smooth_iters=0):
+    """Close a boundary loop with concentric rings that rise into a dome (dome = height as a fraction of radius)."""
+    cen = sum((v.co for v in loop), Vector()) / len(loop)
+    rad = sum((v.co - cen).xy.length for v in loop) / len(loop)
+    ztop = max(v.co.z for v in loop) + dome * rad
+    prev = loop
+    new_verts = []
+    for k in range(1, rings):
+        t = k / rings
+        s = math.sqrt(1 - (1 - t) ** 2)  # ellipsoid: rises steeply from the rim and rounds off at the top
+        ring = [bm.verts.new((cen.x + (v.co.x - cen.x) * (1 - t), cen.y + (v.co.y - cen.y) * (1 - t),
+                              v.co.z + (ztop - v.co.z) * s)) for v in loop]
+        new_verts += ring
+        for i in range(len(loop)):
+            j = (i + 1) % len(loop)
+            bm.faces.new((prev[i], prev[j], ring[j], ring[i]))
+        prev = ring
+    top = bm.verts.new((cen.x, cen.y, ztop))
+    new_verts.append(top)
+    for i in range(len(loop)):
+        bm.faces.new((prev[i], prev[(i + 1) % len(loop)], top))
+    if smooth_iters:  # relax the radial ribs; the rim stays pinned
+        for _ in range(smooth_iters):
+            bmesh.ops.smooth_vert(bm, verts=new_verts, factor=0.5, use_axis_x=True, use_axis_y=True, use_axis_z=True)
+
+
+def _loft_base(bm, loop, half_w, half_d, drop_a, drop_b, rings_a=16, rings_b=4):
+    """Grow a rounded shoulder block under a boundary loop (the neck): a quarter-ellipse profile flares the loop
+    out to an ellipse of half_w x half_d, then the sides run straight down and a flat base closes it."""
+    cen = sum((v.co for v in loop), Vector()) / len(loop)
+    z0 = cen.z
+    info = []
+    for v in loop:
+        d = (v.co - cen).xy
+        r0 = d.length
+        dr = d / r0 if r0 > 1e-9 else Vector((1, 0))
+        re = 1 / math.sqrt((dr.x / half_w) ** 2 + (dr.y / half_d) ** 2)
+        info.append((dr, r0, re, v.co.z))
+    prev = loop
+    for kk in range(1, rings_a + rings_b + 1):
+        if kk <= rings_a:
+            th = kk / rings_a * math.pi / 2
+            sr = math.sin(th)
+            z = z0 - drop_a * (0.6 * (1 - math.cos(th)) + 0.4 * sr)  # sloping shoulder line, rounding off to vertical
+        else:
+            sr = 1.0
+            z = z0 - drop_a - drop_b * (kk - rings_a) / rings_b
+        ring = []
+        for (dr, r0, re, zv) in info:
+            r = r0 + (re - r0) * sr
+            zz = z + (zv - z0) * (1 - sr) if kk <= rings_a else z
+            ring.append(bm.verts.new((cen.x + dr.x * r, cen.y + dr.y * r, zz)))
+        for i in range(len(loop)):
+            j = (i + 1) % len(loop)
+            bm.faces.new((prev[i], prev[j], ring[j], ring[i]))
+        prev = ring
+    _cap_loop(bm, prev, dome=0.0, rings=10)
+
+
+def _taubin(me, iters, lam=0.5, mu=-0.53):
+    """Taubin smoothing of mesh `me` in place: relaxes the surface like Laplacian smoothing but does not shrink it."""
+    import numpy as np
+    n = len(me.vertices)
+    v = np.empty(n * 3, np.float32)
+    me.vertices.foreach_get('co', v)
+    v = v.reshape(-1, 3).astype(np.float64)
+    e = np.empty(len(me.edges) * 2, np.int32)
+    me.edges.foreach_get('vertices', e)
+    e = e.reshape(-1, 2)
+    a, b = np.concatenate([e[:, 0], e[:, 1]]), np.concatenate([e[:, 1], e[:, 0]])
+    deg = np.maximum(np.bincount(a, minlength=n), 1).astype(np.float64)
+
+    def lap(p):
+        out = np.empty_like(p)
+        for ax in range(3):
+            out[:, ax] = np.bincount(a, weights=p[b, ax], minlength=n)
+        return out / deg[:, None] - p
+    for _ in range(iters):
+        v += lam * lap(v)
+        v += mu * lap(v)
+    me.vertices.foreach_set('co', v.astype(np.float32).ravel())
+    me.update()
+
+
+def _hair_masks(co, k, cx, cy, zbase, hairline_z=0.33):
+    """Hair-zone masks for vertices `co` (Nx3, bust units), evaluated in the scan's own units so they hold at any scale:
+    returns (top, side) in 0..1. top = above the hairline, side = sides and back above the nape, with the face and
+    both ears (the head is turned a little, so the ears are not symmetric) left alone."""
+    import numpy as np
+    ss = lambda t: np.clip(t, 0, 1) ** 2 * (3 - 2 * np.clip(t, 0, 1))
+    xo, yo, zo = (co[:, 0] + cx) / k, (co[:, 1] + cy) / k, co[:, 2] / k + zbase
+    face = ss((0.0 - yo) / 0.2)
+    nape = ss((zo + 0.25) / 0.12)
+    ear = (ss((np.abs(xo + 0.075) - 0.30) / 0.08) * ss((yo + 0.12) / 0.1) * ss((0.5 - yo) / 0.1) *
+           ss((zo + 0.35) / 0.1) * ss((0.62 - zo) / 0.1))
+    top = ss((zo - hairline_z) / 0.04) * (1 - ear) * (1 - face * ss((0.5 - zo) / 0.08))  # no bangs, no ear
+    return top, (1 - face) * nape * (1 - ear)
+
+
+def _hair_locks(o, k, cx, cy, zbase, hairline_z, amp=0.035, count=64, volume=0.05, back_only=False):
+    """Carve marble hair: locks that sweep down from a crown swirl, with waviness and clumping. Only the hair zone
+    moves (see _hair_masks), along the vertex normals."""
+    import numpy as np
+    me = o.data
+    n = len(me.vertices)
+    co = np.empty(n * 3, np.float32)
+    me.vertices.foreach_get('co', co)
+    co = co.reshape(-1, 3).astype(np.float64)
+    nor = np.empty(n * 3, np.float32)
+    me.vertices.foreach_get('normal', nor)
+    nor = nor.reshape(-1, 3).astype(np.float64)
+    ss = lambda t: np.clip(t, 0, 1) ** 2 * (3 - 2 * np.clip(t, 0, 1))
+    top, side = _hair_masks(co, k, cx, cy, zbase, hairline_z)
+    mask = np.maximum(top, side)
+    if back_only:  # under a cap: carve only the hair behind the ears, leave sideburns and ears as scanned
+        mask = side * ss(((co[:, 1] + cy) / k - 0.5) / 0.15)
+    x, y, z = co[:, 0], co[:, 1], co[:, 2]
+    hi = co[z > co[:, 2].max() - 0.4]
+    ccx, ccy = (hi[:, 0].mean(), hi[:, 1].mean()) if len(hi) else (0.0, 0.0)
+    th = np.arctan2(y - ccy, x - ccx)
+    rho = np.hypot(x - ccx, y - ccy)
+    # generic combed hair: straight, even grooves running down from the crown (no waviness, no clumps, no swirl)
+    lock = 0.5 + 0.5 * np.cos(count * th)
+    d = amp * (lock ** 1.3 - 0.45)
+    d += volume                                    # the hair mass stands proud of the skull, which shows a hairline
+    d *= ss(rho / 0.3) * mask                     # no pinwheel singularity at the very top; hair zone only
+    co += nor * d[:, None]
+    me.vertices.foreach_set('co', co.astype(np.float32).ravel())
+    me.update()
+
+
+def build_hat(c, cx, cy, z, rx, ry, crown_h=0.95, tilt=-5.0):
+    """Marble top hat sitting on the head: rolled brim, slightly tapered crown, dark stone band.
+    (cx, cy, z) is the centre of the brim plane, rx/ry the half width/depth of the head under it."""
+    mm = marble_mat('HatMarble')
+    band = mat('HatBand', '#2A3135', 0.0, 0.42, 0.3)
+    rc = rx * 1.07                     # crown radius across the head; the crown is stretched to the head's depth below
+    rb = rc * 1.42                     # brim radius
+    stretch = max(1.0, ry / rx * 1.04)
+
+    def part(name, radius1, radius2, depth, zc, material, bev):
+        bpy.ops.mesh.primitive_cone_add(vertices=96, radius1=radius1, radius2=radius2, depth=depth, location=(0, 0, zc))
+        p = bpy.context.active_object
+        p.name = name
+        p.scale = (1.0, stretch, 1.0)
+        bpy.ops.object.transform_apply(scale=True)
+        p.data.materials.append(material)
+        for f in p.data.polygons:
+            f.use_smooth = True
+        bevel(p, bev, 4, harden=False)
+        link(p, c)
+        return p
+    brim = part('HatBrim', rb, rb, 0.08, 0.0, mm, 0.03)
+    crown = part('HatCrown', rc * 1.0, rc * 0.93, crown_h, crown_h / 2 + 0.03, mm, 0.07)
+    ribbon = part('HatBand', rc * 1.012, rc * 1.012, 0.22, 0.15, band, 0.012)
+    pivot = bpy.data.objects.new('HatPivot', None)
+    c.objects.link(pivot)
+    pivot.location = (cx, cy, z)
+    pivot.rotation_euler = (math.radians(tilt), 0, 0)
+    for p in (brim, crown, ribbon):
+        p.parent = pivot
+    bpy.context.view_layer.update()
+    # drop the empty by baking the parent transform into the parts
+    for p in (brim, crown, ribbon):
+        mw = p.matrix_world.copy()
+        p.parent = None
+        p.matrix_world = mw
+    bpy.data.objects.remove(pivot, do_unlink=True)
+
+
+def build_cap(c, head, cx, cy, zc, skull, tilt=-19.0, yaw=0.0, text='NY'):
+    """Baseball cap in dark stone: a six-panel shell that lies on the head, a bill, a button and a flat embroidered 'NY'
+    (about 1 mm proud). The shell starts as a superellipsoid fitted around the skull and is then shrink-wrapped onto
+    the head (`head`, a mesh object) so the cloth sits flush with a few millimetres of margin; seams, bill, button and
+    lettering are placed on that fitted surface.
+
+    The rim is not level: it sits at the hairline in front, at the ear on the sides and low on the neck behind, so
+    `tilt` (degrees about x, negative = front up) lifts the front. `yaw` (radians about z) turns the cap so its centre
+    line follows the face. (cx, cy, zc) is the centre of the rim, `skull` the vertices of the head."""
+    import numpy as np
+    from mathutils import Matrix
+    from mathutils.bvhtree import BVHTree
+    navy = mat('CapNavy', '#1B2A49', 0.0, 0.5, 0.15)
+    white = mat('CapLetters', '#F2EFE8', 0.0, 0.5, 0.05)
+    th = math.radians(tilt)
+    M = Matrix.Translation((cx, cy, zc)) @ Matrix.Rotation(yaw, 4, 'Z') @ Matrix.Rotation(th, 4, 'X')
+    Mi = M.inverted()
+    A = np.array(Mi.to_3x3())
+    P = np.array([p[:] for p in skull], dtype=np.float64) @ A.T + np.array(Mi.translation)
+    n_se = 3.0                                         # superellipsoid exponent: a squarer dome hugs a skull better
+    se = lambda p: math.copysign(abs(p) ** (2.0 / n_se), p)
+    above = P[P[:, 2] > 0.12 * P[:, 2].max()]          # the rim region meets the ears and hair; fit the skull above it
+    ax, H = np.abs(above[:, 0]).max(), above[:, 2].max()
+    ayf, ayb = -above[:, 1].min(), above[:, 1].max()   # front and back of the skull are fitted separately
+    ayv = np.where(above[:, 1] < 0, ayf, ayb)
+    nrm = (np.abs(above[:, 0] / ax) ** n_se + np.abs(above[:, 1] / ayv) ** n_se + np.abs(above[:, 2] / H) ** n_se) ** (1 / n_se)
+    grow = max(1.0, nrm.max()) * 1.01
+    ax, ayf, ayb, H = ax * grow, ayf * grow, ayb * grow, H * grow
+    ayy = lambda y: ayf if y < 0 else ayb
+
+    def ell(u, v_, w):
+        """Point on the fitted superellipsoid for the unit-sphere direction (u, v_, w), in the cap's frame."""
+        return Vector((se(u) * ax, se(v_) * ayy(v_), se(max(w, 0.0)) * H))
+
+    # shell: upper half of the superellipsoid, dense enough to follow the head, moved to world space
+    bm = bmesh.new()
+    bmesh.ops.create_uvsphere(bm, u_segments=96, v_segments=48, radius=1.0)
+    bmesh.ops.delete(bm, geom=[v for v in bm.verts if v.co.z < -1e-4], context='VERTS')
+    for v in bm.verts:
+        v.co = M @ ell(v.co.x, v.co.y, v.co.z)
+    me = bpy.data.meshes.new('CapDome')
+    bm.to_mesh(me)
+    bm.free()
+    dome = bpy.data.objects.new('CapDome', me)
+    c.objects.link(dome)
+    dome.data.materials.append(navy)
+    for p in me.polygons:
+        p.use_smooth = True
+    # lay the cloth on the head: wrap, relax, wrap again (the relax step evens out the rim), then bake. The target is a
+    # smoothed copy of the head so the cloth bridges the hair grooves instead of following each one.
+    target = head.copy()
+    target.data = head.data.copy()
+    target.name = 'CapTarget'
+    c.objects.link(target)
+    rm_ = target.modifiers.new('Remesh', 'REMESH')
+    rm_.mode = 'VOXEL'
+    rm_.voxel_size = 0.03
+    with bpy.context.temp_override(object=target, active_object=target):
+        bpy.ops.object.modifier_apply(modifier='Remesh')
+    _taubin(target.data, 50)
+    for name, kind in (('Fit', 'SHRINKWRAP'), ('Relax', 'SMOOTH'), ('Fit2', 'SHRINKWRAP')):
+        m_ = dome.modifiers.new(name, kind)
+        if kind == 'SHRINKWRAP':
+            m_.target = target
+            m_.wrap_method = 'NEAREST_SURFACEPOINT'
+            m_.offset = 0.02                            # a couple of mm of air between cloth and head
+        else:
+            m_.factor = 0.5
+            m_.iterations = 12
+    for name in ('Fit', 'Relax', 'Fit2'):
+        with bpy.context.temp_override(object=dome, active_object=dome):
+            bpy.ops.object.modifier_apply(modifier=name)
+    bpy.data.objects.remove(target, do_unlink=True)
+    so = dome.modifiers.new('Thick', 'SOLIDIFY')
+    so.thickness = 0.03                                 # about 3 mm of cloth
+    so.offset = 1
+    bevel(dome, 0.01, 2, harden=False)
+    bpy.context.view_layer.update()
+    bvh = BVHTree.FromObject(dome, bpy.context.evaluated_depsgraph_get())
+
+    def on_cloth(world_pt, lift=0.0):
+        loc, nor, _i, _d = bvh.find_nearest(world_pt)
+        return loc + nor * lift, nor
+
+    # six panels: raised seams from the button down to the rim (the front two panels meet at the centre front)
+    seams = []
+    for i in range(6):
+        phi = math.radians(90 + 60 * i)
+        cu = bpy.data.curves.new(f'CapSeam{i}', 'CURVE')
+        cu.dimensions = '3D'
+        cu.bevel_depth = 0.006
+        cu.bevel_resolution = 2
+        sp = cu.splines.new('POLY')
+        n = 40
+        sp.points.add(n - 1)
+        for j in range(n):
+            t = math.radians(90 * j / (n - 1))              # 0 at the rim, 90 degrees at the button
+            q, _n = on_cloth(M @ ell(math.cos(phi) * math.cos(t) * 1.15, math.sin(phi) * math.cos(t) * 1.15, math.sin(t) * 1.15), 0.002)
+            sp.points[j].co = (q.x, q.y, q.z, 1)
+        ob = bpy.data.objects.new(f'CapSeam{i}', cu)
+        c.objects.link(ob)
+        cu.materials.append(navy)
+        seams.append(ob)
+    # bill: rooted on the fitted rim along (almost) the whole front, nearly in the rim plane, curved around the face
+    bm = bmesh.new()
+    nu, nv = 36, 10
+    grid = [[None] * (nv + 1) for _ in range(nu + 1)]
+    reach = ayf * 0.62
+    R3 = M.to_3x3()
+    for i in range(nu + 1):
+        u = -1 + 2 * i / nu
+        phi = u * math.radians(64)                        # only the front of the rim: the bill ends in a point at the temples
+        r_loc = Vector((ax * se(math.sin(phi)), -ayf * se(math.cos(phi)), 0.0))
+        nx, ny = math.sin(phi) / ax, -math.cos(phi) / ayf
+        nl = math.hypot(nx, ny)
+        nx, ny = nx / nl, ny / nl
+        root_w = M @ r_loc
+        fitted, _n = on_cloth(root_w, 0.0)
+        delta = fitted - root_w                       # the shell moved when it was laid on the head: follow it
+        for j in range(nv + 1):
+            v = j / nv
+            lift = (1 - u * u) ** 0.9                       # width runs smoothly out to nothing where the bill meets the shell
+            x = r_loc.x + nx * v * reach * lift * 0.3       # almost no sideways flare
+            y = r_loc.y + ny * v * reach * lift
+            z = -0.01 - 0.10 * reach * v ** 1.5 - 0.16 * reach * u * u * v
+            grid[i][j] = bm.verts.new(M @ Vector((x, y, z)) + delta)
+    for i in range(nu):
+        for j in range(nv):
+            bm.faces.new((grid[i][j], grid[i + 1][j], grid[i + 1][j + 1], grid[i][j + 1]))
+    up = R3 @ Vector((0, 0, 0.034))
+    stitch_rows = [[Vector(grid[i][j].co) + up for i in range(nu + 1)] for j in (3, 5, 7, 9)]
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    me2 = bpy.data.meshes.new('CapBill')
+    bm.to_mesh(me2)
+    bm.free()
+    bill = bpy.data.objects.new('CapBill', me2)
+    c.objects.link(bill)
+    bill.data.materials.append(navy)
+    for p in me2.polygons:
+        p.use_smooth = True
+    sb = bill.modifiers.new('Thick', 'SOLIDIFY')
+    sb.thickness = 0.06
+    sb.offset = 0
+    bevel(bill, 0.015, 2, harden=False)
+    for r_i, row in enumerate(stitch_rows):
+        cu = bpy.data.curves.new(f'CapStitch{r_i}', 'CURVE')
+        cu.dimensions = '3D'
+        cu.bevel_depth = 0.0035
+        sp = cu.splines.new('POLY')
+        sp.points.add(len(row) - 1)
+        for q, pt in zip(sp.points, row):
+            q.co = (pt.x, pt.y, pt.z, 1)
+        ob = bpy.data.objects.new(f'CapStitch{r_i}', cu)
+        c.objects.link(ob)
+        cu.materials.append(navy)
+        seams.append(ob)
+    # button, sitting on the cloth at the crown
+    top, tn = on_cloth(M @ Vector((0, 0, H * 1.2)), 0.012)
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=0.07, location=top)
+    btn = bpy.context.active_object
+    btn.name = 'CapButton'
+    btn.scale = (1, 1, 0.65)
+    btn.data.materials.append(navy)
+    for p in btn.data.polygons:
+        p.use_smooth = True
+    link(btn, c)
+    # embroidery: flat filled letters on the front panel, snapped onto the cloth and lifted about 1 mm
+    zf = 0.5 * H
+    yf = -ayf * (1 - (zf / H) ** n_se) ** (1 / n_se)
+    alpha = math.atan2((abs(yf) / ayf) ** (n_se - 1) / ayf, (zf / H) ** (n_se - 1) / H)
+    cu = bpy.data.curves.new('CapText', 'FONT')
+    cu.body = text
+    cu.size = ax * 0.5
+    cu.extrude = 0.0
     cu.align_x = 'CENTER'
     cu.align_y = 'CENTER'
-    t = bpy.data.objects.new('PlaqueText', cu)
-    c.objects.link(t)
-    t.location = (0, -dpt / 2 - 0.035, -0.45)
-    t.rotation_euler = (math.radians(90), 0, 0)
-    cu.materials.append(mat('PlaqueInk', '#1A1410', 0.4, 0.5))
-    return {'faces': len(o.data.polygons), 'size': tuple(round(x, 3) for x in o.dimensions)}
+    cu.space_character = 0.92
+    cu.materials.append(white)
+    letters = bpy.data.objects.new('CapLetters', cu)
+    c.objects.link(letters)
+    letters.matrix_world = M @ Matrix.Translation((0, yf - 0.06, zf)) @ Matrix.Rotation(alpha, 4, 'X')
+    bpy.context.view_layer.objects.active = letters
+    bpy.ops.object.select_all(action='DESELECT')
+    letters.select_set(True)
+    bpy.ops.object.convert(target='MESH')
+    letters = bpy.context.active_object
+    letters.name = 'CapLetters'
+    letters.modifiers.new('Tri', 'TRIANGULATE')
+    sub = letters.modifiers.new('Fine', 'SUBSURF')
+    sub.subdivision_type = 'SIMPLE'
+    sub.levels = 3
+    sub.render_levels = 3
+    sw = letters.modifiers.new('Snap', 'SHRINKWRAP')
+    sw.target = dome
+    sw.wrap_method = 'NEAREST_SURFACEPOINT'
+    sw.offset = 0.0
+    so2 = letters.modifiers.new('Stitch', 'SOLIDIFY')
+    so2.thickness = 0.011          # about 1 mm at this scale
+    so2.offset = 1
+
+
+def _layer(c, name, outline, bvh, material, offset, thickness, bevel_w=0.008):
+    """A thin raised cloth panel on the front of the body: a flat polygon (x, z pairs) is cut into fine triangles and
+    each vertex is cast straight back onto the body surface (`bvh`), lifted by `offset`, then given thickness."""
+    bm = bmesh.new()
+    vs = [bm.verts.new((x, -2.0, z)) for x, z in outline]
+    bm.faces.new(vs)
+    bmesh.ops.triangulate(bm, faces=bm.faces[:])
+    bmesh.ops.subdivide_edges(bm, edges=bm.edges[:], cuts=9, use_grid_fill=True)
+    bmesh.ops.triangulate(bm, faces=bm.faces[:])
+    for v in bm.verts:
+        hit = bvh.ray_cast((v.co.x, -3.0, v.co.z), (0, 1, 0))
+        if hit[0] is None:
+            hit = bvh.find_nearest(v.co)
+        v.co = hit[0] + hit[1] * offset
+    bm.normal_update()
+    # make sure the cloth grows outward (toward the viewer, -y)
+    if sum(f.normal.y * f.calc_area() for f in bm.faces) > 0:
+        for f in bm.faces:
+            f.normal_flip()
+    me = bpy.data.meshes.new(name)
+    bm.to_mesh(me)
+    bm.free()
+    ob = bpy.data.objects.new(name, me)
+    c.objects.link(ob)
+    ob.data.materials.append(material)
+    for p in me.polygons:
+        p.use_smooth = True
+    so = ob.modifiers.new('Cloth', 'SOLIDIFY')
+    so.thickness = thickness
+    so.offset = 1
+    if bevel_w:
+        bevel(ob, bevel_w, 2, harden=False)
+    return ob
+
+
+def build_suit(c, body, k, zbase, neck_z):
+    """Dress the bust in a suit jacket, white shirt and tie. The torso shape stays the carved shoulder block; the
+    details are raised cloth layers on it: shirt front, collar, notch lapels, tie with knot, buttons."""
+    import numpy as np
+    from mathutils.bvhtree import BVHTree
+    shirt_m = marble_mat('ShirtMarble')
+    jacket_m = marble_mat('JacketMarble')
+    tie_m = mat('TieNavy', '#1B2A49', 0.0, 0.45, 0.2)
+    button_m = mat('SuitButton', '#2A3135', 0.0, 0.4, 0.3)
+    zn = (neck_z - zbase) * k                                  # where the neck meets the shoulders
+    co = np.empty(len(body.data.vertices) * 3, np.float32)
+    body.data.vertices.foreach_get('co', co)
+    co = co.reshape(-1, 3)
+    def section(dz):
+        sl = co[(np.abs(co[:, 2] - (zn + dz)) < 0.025) & (co[:, 1] > -0.85)]   # the beard and chin are further out
+        return ((sl[:, 0].min() + sl[:, 0].max()) / 2, (sl[:, 1].min() + sl[:, 1].max()) / 2,
+                (sl[:, 0].max() - sl[:, 0].min()) / 2, (sl[:, 1].max() - sl[:, 1].min()) / 2)
+    bx, by, brx, bry = section(0.05)                           # neck at the shoulders
+    nx, ny, rx, ry = section(0.22)                             # neck under the chin
+    bvh = BVHTree.FromObject(body, bpy.context.evaluated_depsgraph_get())
+    tip = zn * 0.30                                            # where the lapels meet the closed jacket
+    mir = lambda pts: [(-x, z) for x, z in pts][::-1]
+    X = lambda pts: [(nx + x, z) for x, z in pts]
+    # shirt: the V between the lapels, from the collar down to the first button
+    shirt = [(-0.30, zn + 0.04), (0.30, zn + 0.04), (0.05, tip + 0.04), (-0.05, tip + 0.04)]
+    _layer(c, 'SuitShirt', X(shirt), bvh, shirt_m, 0.012, 0.02)
+    # notch lapels, one per side, standing proud of the shirt and the jacket
+    lap = [(0.30, zn + 0.04), (0.60, zn - 0.08), (0.74, zn - 0.22), (0.63, zn - 0.27), (0.60, zn - 0.42),
+           (0.20, tip - 0.06), (0.05, tip)]
+    _layer(c, 'SuitLapelR', X(lap), bvh, jacket_m, 0.02, 0.045)
+    _layer(c, 'SuitLapelL', X(mir(lap)), bvh, jacket_m, 0.02, 0.045)
+    # the jacket's front edge below the lapels
+    edge = [(-0.012, 0.02), (0.012, 0.02), (0.012, tip), (-0.012, tip)]
+    _layer(c, 'SuitFront', X(edge), bvh, jacket_m, 0.02, 0.02, bevel_w=0)
+    # tie: narrow at the knot, widening to a pointed end
+    blade = [(-0.06, zn + 0.02), (0.06, zn + 0.02), (0.07, zn - 0.14), (0.145, tip + 0.30), (0.0, tip - 0.10),
+             (-0.145, tip + 0.30), (-0.07, zn - 0.14)]
+    _layer(c, 'SuitTie', X(blade), bvh, tie_m, 0.045, 0.04)
+
+    def on_chest(x, z, lift):
+        hit = bvh.ray_cast((x, -3.0, z), (0, 1, 0))
+        return (hit[0] + hit[1] * lift) if hit[0] is not None else Vector((x, -1.2, z))
+    # shirt collar: a band around the neck, wider at the shoulders, with the tie knot in front
+    bpy.ops.mesh.primitive_cone_add(vertices=72, radius1=rx + 0.13, radius2=rx + 0.07, depth=0.22, end_fill_type='NOTHING',
+                                    location=(nx, ny, zn + 0.14))
+    col = bpy.context.active_object
+    col.name = 'SuitCollar'
+    col.scale = (1.0, ry / rx, 1.0)
+    bpy.ops.object.transform_apply(scale=True)
+    col.data.materials.append(shirt_m)
+    for p in col.data.polygons:
+        p.use_smooth = True
+    sc = col.modifiers.new('Cloth', 'SOLIDIFY')
+    sc.thickness = 0.05
+    sc.offset = 0
+    bevel(col, 0.012, 2, harden=False)
+    link(col, c)
+    kz = zn + 0.0
+    kp = on_chest(nx, kz, 0.05)
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=1.0, location=kp)
+    knot = bpy.context.active_object
+    knot.name = 'SuitKnot'
+    knot.scale = (0.115, 0.085, 0.10)
+    knot.data.materials.append(tie_m)
+    for p in knot.data.polygons:
+        p.use_smooth = True
+    link(knot, c)
+    # two buttons below the lapels
+    for bz, nm in ((tip - 0.13, 'SuitButton1'), (tip - 0.34, 'SuitButton2')):
+        bp = on_chest(nx, bz, 0.03)
+        bpy.ops.mesh.primitive_uv_sphere_add(radius=0.05, location=bp)
+        b_ = bpy.context.active_object
+        b_.name = nm
+        b_.scale = (1, 0.6, 1)
+        b_.data.materials.append(button_m)
+        for p in b_.data.polygons:
+            p.use_smooth = True
+        link(b_, c)
+
+
+def build_bust_scan(ply, height=3.6, dome=0.75, crown_z=0.55, neck_z=-0.62, half_w=1.15, half_d=0.65, drop_a=0.55, drop_b=0.4,
+                    voxel=0.008, faces=140000, hairline_z=0.33, hair_voxel=0.07, hair_smooth=1.0, hair_relief=0.035, hat=False, hat_z=0.73, cap=False, cap_z=0.36, suit=False):
+    """Bust from the photogrammetry head scan (oriented: face toward -y, z up, see PROCESS.md).
+    Keeps head and neck, replaces the torn shirt with a rounded shoulder block, caps the unphotographed crown with
+    a dome, remeshes and smooths the hair, then adds marble and the plinth. The result is named 'Bust' like the TRELLIS one so the exporters work unchanged."""
+    c = coll('Bust')
+    for o in list(c.objects):
+        bpy.data.objects.remove(o, do_unlink=True)
+    bpy.ops.wm.ply_import(filepath=ply)
+    o = bpy.context.selected_objects[0]
+    link(o, c)
+    o.name = 'Bust'
+    zbase = neck_z - drop_a - drop_b
+    bm = bmesh.new()
+    bm.from_mesh(o.data)
+    # keep head and neck: cut at the neck
+    geom = list(bm.verts) + list(bm.edges) + list(bm.faces)
+    bmesh.ops.bisect_plane(bm, geom=geom, plane_co=(0, 0, neck_z), plane_no=(0, 0, 1), clear_inner=True)
+    bm.verts.ensure_lookup_table()
+    # drop loose fragments (arms, chair), keep the largest piece
+    seen, comps = set(), []
+    for v in bm.verts:
+        if v in seen:
+            continue
+        stack, comp = [v], []
+        seen.add(v)
+        while stack:
+            x = stack.pop()
+            comp.append(x)
+            for e in x.link_edges:
+                w = e.other_vert(x)
+                if w not in seen:
+                    seen.add(w)
+                    stack.append(w)
+        comps.append(comp)
+    comps.sort(key=len, reverse=True)
+    bmesh.ops.delete(bm, geom=[v for comp in comps[1:] for v in comp], context='VERTS')
+    # the crown was never photographed (the orbit was at eye level), so the scan ends in a ragged crater:
+    # cut below it at crown_z and close the clean cross-section with a dome
+    geom = list(bm.verts) + list(bm.edges) + list(bm.faces)
+    bmesh.ops.bisect_plane(bm, geom=geom, plane_co=(0, 0, crown_z), plane_no=(0, 0, 1), clear_outer=True)
+    loops = [lp for lp in _boundary_loops(bm) if len(lp) >= 12]
+    neck = min(loops, key=lambda lp: sum(v.co.z for v in lp) / len(lp))
+    for loop in loops:
+        if loop is neck:
+            _loft_base(bm, loop, half_w, half_d, drop_a, drop_b)
+        else:
+            _cap_loop(bm, loop, dome=dome, smooth_iters=40)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    bm.to_mesh(o.data)
+    bm.free()
+    # scale to `height`, stand on z = 0, centre in x/y (measured on the vertices: o.bound_box is stale after data.transform)
+    zs = [v.co.z for v in o.data.vertices]
+    k = height / (max(zs) - min(zs))
+    o.data.transform(__import__('mathutils').Matrix.Scale(k, 4))
+    xs = [v.co.x for v in o.data.vertices]
+    ys = [v.co.y for v in o.data.vertices]
+    zs = [v.co.z for v in o.data.vertices]
+    cx = (max(xs) + min(xs)) / 2
+    cy = (max(ys) + min(ys)) / 2
+    o.data.transform(__import__('mathutils').Matrix.Translation((-cx, -cy, -min(zs))))
+    # unify: voxel remesh welds the cap and closes small holes, a light smooth takes off scanner noise
+    r = o.modifiers.new('Remesh', 'REMESH')
+    r.mode = 'VOXEL'
+    r.voxel_size = voxel
+    with bpy.context.temp_override(object=o, active_object=o):
+        bpy.ops.object.modifier_apply(modifier='Remesh')
+    # hair: top of the head (above the hairline) and the back of the head are pulled onto a calm, smoothed copy;
+    # the face (front, below the hairline) is left alone so the likeness survives
+    import numpy as np
+    me = o.data
+    co = np.empty(len(me.vertices) * 3, np.float32)
+    me.vertices.foreach_get('co', co)
+    co = co.reshape(-1, 3).astype(np.float64)
+    top, side = _hair_masks(co, k, cx, cy, zbase, hairline_z)
+    ssn = lambda t: np.clip(t, 0, 1) ** 2 * (3 - 2 * np.clip(t, 0, 1))
+    # the top eases from the lightly smoothed hair into the fully smoothed dome
+    wtop = top * (hair_smooth + (1 - hair_smooth) * ssn((co[:, 2] / height - 0.84) / 0.1))
+    wh = np.maximum(wtop, hair_smooth * side)
+    wbody = ssn((neck_z - (co[:, 2] / k + zbase)) / 0.12)  # shoulders: iron out the loft's radial pleats
+    vg = o.vertex_groups.new(name='Hair')
+    vb = o.vertex_groups.new(name='Body')
+    for i in np.nonzero(wh > 0)[0]:
+        vg.add([int(i)], float(wh[i]), 'REPLACE')
+    for i in np.nonzero(wbody > 0)[0]:
+        vb.add([int(i)], float(wbody[i]), 'REPLACE')
+
+    def proxy_of(name, vox, iters):
+        p = o.copy()
+        p.data = o.data.copy()
+        p.name = name
+        c.objects.link(p)
+        rm = p.modifiers.new('Remesh', 'REMESH')
+        rm.mode = 'VOXEL'
+        rm.voxel_size = vox
+        with bpy.context.temp_override(object=p, active_object=p):
+            bpy.ops.object.modifier_apply(modifier='Remesh')
+        _taubin(p.data, iters)
+        return p
+    hair_proxy = proxy_of('HairProxy', hair_voxel, 120)
+    body_proxy = proxy_of('BodyProxy', 0.08, 220)
+    hs = o.modifiers.new('HairSmooth', 'SHRINKWRAP')
+    hs.target = hair_proxy
+    hs.wrap_method = 'NEAREST_SURFACEPOINT'
+    hs.vertex_group = 'Hair'
+    bs = o.modifiers.new('BodySmooth', 'SHRINKWRAP')
+    bs.target = body_proxy
+    bs.wrap_method = 'NEAREST_SURFACEPOINT'
+    bs.vertex_group = 'Body'
+    sh = o.modifiers.new('ShoulderSmooth', 'SMOOTH')
+    sh.factor = 0.8
+    sh.iterations = 60
+    sh.vertex_group = 'Body'
+    # a fine remesh welds the shrinkwrapped regions (no overlapping faces), then a light smooth
+    cr = o.modifiers.new('Clean', 'REMESH')
+    cr.mode = 'VOXEL'
+    cr.voxel_size = voxel
+    cs = o.modifiers.new('Smooth', 'CORRECTIVE_SMOOTH')
+    cs.iterations = 2
+    cs.use_only_smooth = True
+    d = o.modifiers.new('Decimate', 'DECIMATE')
+    bpy.context.view_layer.update()
+    n = len(o.evaluated_get(bpy.context.evaluated_depsgraph_get()).data.polygons)
+    d.ratio = min(1.0, faces / max(n, 1))
+    for mname in ('HairSmooth', 'BodySmooth', 'ShoulderSmooth', 'Clean'):
+        with bpy.context.temp_override(object=o, active_object=o):
+            bpy.ops.object.modifier_apply(modifier=mname)
+    _hair_locks(o, k, cx, cy, zbase, hairline_z, amp=hair_relief, volume=0.03 if cap else 0.05, back_only=cap)  # carved hair on the welded, evenly spaced mesh
+    for mname in ('Smooth', 'Decimate'):
+        with bpy.context.temp_override(object=o, active_object=o):
+            bpy.ops.object.modifier_apply(modifier=mname)
+    for p_ in (hair_proxy, body_proxy):
+        bpy.data.objects.remove(p_, do_unlink=True)
+    for p in o.data.polygons:
+        p.use_smooth = True
+    o.data.materials.clear()
+    o.data.materials.append(marble_mat())
+    bust_plinth(o, c, wf=1.0, df=1.3)
+    if hat:
+        zb = hat_z * height
+        near = [v.co for v in o.data.vertices if abs(v.co.z - zb) < 0.1]
+        x0, x1 = min(v.x for v in near), max(v.x for v in near)
+        y0, y1 = min(v.y for v in near), max(v.y for v in near)
+        build_hat(c, (x0 + x1) / 2, (y0 + y1) / 2 + 0.05, zb, (x1 - x0) / 2, (y1 - y0) / 2)
+    if suit:
+        build_suit(c, o, k, zbase, neck_z)
+    if cap:
+        zc = (cap_z - zbase) * k
+        near = [v.co for v in o.data.vertices if abs(v.co.z - zc) < 0.12]
+        sx = (min(v.x for v in near) + max(v.x for v in near)) / 2
+        sy = (min(v.y for v in near) + max(v.y for v in near)) / 2
+        # the head is turned a little: aim the cap along the line from the middle between the ears to the nose tip
+        zof = lambda v: v.co.z / k + zbase
+        nose = min((v for v in o.data.vertices if -0.2 < zof(v) < 0.3), key=lambda v: v.co.y).co
+        ear_h = [v.co for v in o.data.vertices if 0.15 < zof(v) < 0.45]
+        le = min(ear_h, key=lambda p: p.x)
+        re_ = max(ear_h, key=lambda p: p.x)
+        mid = Vector(((le.x + re_.x) / 2, (le.y + re_.y) / 2, 0.0))
+        d = Vector((nose.x - mid.x, nose.y - mid.y, 0.0)).normalized()
+        yaw = math.atan2(d.x, -d.y)
+        along = (Vector((sx, sy, 0.0)) - mid).dot(d)
+        centre = mid + d * along                      # on the nose line, at the middle of the head front to back
+        skull = [v.co.copy() for v in o.data.vertices if v.co.z > zc - 0.6]
+        build_cap(c, o, centre.x, centre.y, zc, skull, yaw=yaw)
+    return {'faces': len(o.data.polygons), 'scale': k, 'size': tuple(round(x, 3) for x in o.dimensions)}
 
 
 def export_bust_glb():
