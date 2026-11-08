@@ -300,6 +300,17 @@ a { color: inherit; }
 .views { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 10; pointer-events: none; }
 .is-live img { visibility: hidden; }
 
+/* the bust can be turned with the pointer; the hint goes away after the first drag */
+.contact__at.is-live { cursor: grab; touch-action: pan-y; -webkit-user-select: none; user-select: none; }
+.contact__at.is-live:focus-visible { outline: 1px dashed var(--mint); outline-offset: 6px; }
+.contact__at.is-dragging { cursor: grabbing; }
+.drag-hint {
+  display: none; margin-top: 10px; text-align: center; color: var(--dim);
+  font: 0.72rem/1.4 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; transition: opacity 0.6s;
+}
+.contact__at.is-live .drag-hint { display: block; }
+.contact__at.was-dragged .drag-hint { opacity: 0; }
+
 
 /* name + CVR stay on one line; shrink the type on narrow screens instead of wrapping */
 .foot > span:first-child { white-space: nowrap; font-size: min(1em, calc((100vw - 3rem) / 26)); }

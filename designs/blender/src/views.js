@@ -44,6 +44,60 @@ function printMaterial() {
   return m;
 }
 
+// Drag to turn (the bust): the model follows the pointer, keeps turning with the speed it was let go with, tilts a little
+// up and down, and eases back into its slow turn after a few idle seconds. Touch: horizontal drags turn it, vertical
+// ones still scroll the page (touch-action: pan-y in the CSS). Arrow keys nudge it when the frame has focus.
+function attachDrag(v) {
+  const s = v.drag = { yaw: 0, pitch: 0, vel: 0, down: false, x: 0, y: 0, ts: 0, idle: 99, auto: 1 };
+  const el = v.frame;
+  const K = 0.008;                                  // radians per pixel
+  el.tabIndex = 0;
+  el.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    s.down = true; s.x = e.clientX; s.y = e.clientY; s.ts = e.timeStamp;
+    s.vel = 0; s.idle = 0; s.auto = 0;
+    el.setPointerCapture(e.pointerId);
+    el.classList.add('is-dragging', 'was-dragged');
+  });
+  el.addEventListener('pointermove', (e) => {
+    if (!s.down) return;
+    const dx = e.clientX - s.x, dy = e.clientY - s.y;
+    const dts = Math.max(e.timeStamp - s.ts, 1) / 1000;
+    s.x = e.clientX; s.y = e.clientY; s.ts = e.timeStamp;
+    s.yaw += dx * K;
+    s.pitch = THREE.MathUtils.clamp(s.pitch + dy * K * 0.5, -0.4, 0.4);
+    s.vel = THREE.MathUtils.lerp(s.vel, (dx * K) / dts, 0.5);   // rad/s, smoothed over the last moves
+  });
+  const release = (e) => {
+    if (!s.down) return;
+    s.down = false; s.idle = 0;
+    el.classList.remove('is-dragging');
+    if (el.hasPointerCapture(e.pointerId)) el.releasePointerCapture(e.pointerId);
+  };
+  el.addEventListener('pointerup', release);
+  el.addEventListener('pointercancel', release);
+  el.addEventListener('keydown', (e) => {
+    const d = e.key === 'ArrowLeft' ? -1 : e.key === 'ArrowRight' ? 1 : 0;
+    if (!d) return;
+    e.preventDefault();
+    s.vel += d * 2.2; s.idle = 0; s.auto = 0;
+    el.classList.add('was-dragged');
+  });
+}
+
+function dragTick(v, dt, speed) {
+  const s = v.drag;
+  if (!s.down) {
+    s.yaw += s.vel * dt;
+    s.vel *= Math.exp(-dt * 2.5);                   // inertia fades out
+    s.idle += dt;
+    s.auto = s.idle > 2 ? Math.min(1, s.auto + dt * 0.6) : 0;   // then the slow turn eases back in
+    if (!reduced) s.yaw += speed * s.auto * dt;
+    if (s.idle > 1) s.pitch *= Math.exp(-dt * 0.8); // and the tilt settles
+  }
+  v.pivot.rotation.set(s.pitch, s.yaw, 0, 'XYZ');
+}
+
 // name -> how to load, orient and animate it. `dir` is the camera direction, `fill` how much of the frame it fills.
 const DEFS = {
   star: {
@@ -92,9 +146,10 @@ const DEFS = {
     tick: (v, t) => { v.pivot.rotation.y = Math.sin(t * 0.4) * 0.9; v.pivot.rotation.x = Math.sin(t * 0.27) * 0.15; },
   },
   bust: {
-    // marble bust: hair and body from TRELLIS, face from a photogrammetry scan, joined in Blender (build_bust_hybrid); turns slowly on its plinth
-    url: 'models/bust.glb', dir: [0, 0.14, 1], fill: 1.0,
-    tick: (v, t) => { v.pivot.rotation.y = t * 0.4; },
+    // marble bust: hair and body from TRELLIS, face from a photogrammetry scan, joined in Blender (build_bust_hybrid);
+    // turns slowly on its plinth, and can be turned by dragging
+    url: 'models/bust.glb', dir: [0, 0.14, 1], fill: 1.0, drag: true,
+    tick: (v, t, dt) => { dragTick(v, dt, 0.4); },
   },
   layers: {
     url: 'models/layers.glb', dir: [0.35, 0.65, 0.8], fill: 1.15,
@@ -178,6 +233,7 @@ export function initViews() {
     scene.add(pivot);
     const v = { frame, el: frame.querySelector('img') || frame, def, scene, camera, pivot, ready: false, radius: 1 };
     views.push(v);
+    if (def.drag) attachDrag(v);
 
     loader.load(def.url, (gltf) => {
       const m = gltf.scene;
