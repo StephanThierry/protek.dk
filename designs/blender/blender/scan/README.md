@@ -8,7 +8,6 @@ supplies the face. The photos themselves are not in the repo (about 540 MB); eve
 scan/
   models/trellis_head_studio_s2.ply   TRELLIS head, the input of build_bust() in ../scene.py
   models/head_scan_oriented.ply       the photogrammetry head, upright, face toward -y (prepare_scan.py)
-  models/bust_hybrid.glb              the finished hybrid bust (Blender export, meshopt), NOT the live site model
   data/align_xform.npz                scan -> bust transform (align_face.py)
   data/face_feature.npy               per-vertex "darker than its surroundings" from the photos (photo_features.py)
   mask.py  prepare_scan.py  align_face.py  photo_features.py   (plain Python)
@@ -21,7 +20,7 @@ scan/
 exec(open(r'<repo>/designs/blender/blender/scene.py').read())
 exec(open(r'<repo>/designs/blender/blender/scan/hybrid_bust.py').read())
 build_bust_hybrid()          # strength=0.3 relief from the photos; 0 = plain face swap
-export_bust_glb()            # writes public/models/bust.glb (the live model): pass a different OUT_MODELS to keep it
+export_bust_glb()            # writes public/models/bust.glb, the model the page loads
 ```
 
 `hybrid_bust.build_bust_hybrid()` checks that `data/face_feature.npy` matches the bust's vertex count. If `build_bust()`
